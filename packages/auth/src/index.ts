@@ -1,41 +1,31 @@
 import {
-	CookieStorage,
-	CognitoUserPool,
-	AuthenticationDetails,
-	ICognitoUserPoolData,
-	ICognitoUserData,
-	IAuthenticationCallback,
-	ICognitoUserAttributeData,
-	CognitoIdToken,
-	CognitoRefreshToken,
-	CognitoAccessToken,
-	ISignUpResult,
-	CognitoUser,
-	MFAOption,
-	CognitoUserSession,
-	CognitoUserAttribute,
-	NodeCallback,
-	ICookieStorageData,
-	ICognitoStorage,
-	appendToCognitoUserAgent,
-} from 'amazon-cognito-identity-js';
+	createMachine,
+	MachineConfig,
+	spawn,
+	EventFrom,
+	AssignAction,
+	assign,
+	sendParent,
+	sendUpdate,
+} from 'xstate';
 
-import { Credentials, CredentialsClass } from '@aws-amplify/core';
+import {
+	CognitoIdentityClient,
+	CognitoIdentity,
+	GetCredentialsForIdentityCommand,
+	GetIdCommand,
+} from '@aws-sdk/client-cognito-identity';
 
 export function dontShakeOut() {
-	// amazon-cognito-identity-js
-	console.log(CookieStorage);
-	console.log(CognitoUserPool);
-	console.log(AuthenticationDetails);
-	console.log(CognitoIdToken);
-	console.log(CognitoRefreshToken);
-	console.log(CognitoAccessToken);
-	console.log(CognitoUser);
-	console.log(CognitoUserSession);
-	console.log(CognitoUserAttribute);
-	console.log(appendToCognitoUserAgent);
+	//xstate
+	console.log(createMachine);
+	console.log(spawn);
+	console.log(assign);
+	console.log(sendParent);
+	console.log(sendUpdate);
 
-	// @aws-amplify/core
-	console.log(Credentials);
-	console.log(CredentialsClass);
+	// @aws-sdk/client-cognito-identity
+	console.log(CognitoIdentityClient);
+	console.log(GetCredentialsForIdentityCommand);
+	console.log(GetIdCommand);
 }
