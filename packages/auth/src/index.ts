@@ -23,7 +23,7 @@ export {
 	CognitoProvider,
 	AmplifyCognitoUser,
 	AWSCredentials,
-} from './Providers/CognitoProvider';
+} from './providers/CognitoProvider';
 export { AuthPluggable } from './AuthPluggable';
 export {
 	USER_PARAM_TYPE,
