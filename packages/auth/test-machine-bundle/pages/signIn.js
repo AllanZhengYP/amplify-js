@@ -1,22 +1,12 @@
 import Link from 'next/link';
+import { dontShakeOut } from '@aws-amplify/auth';
 
 function CognitoSignInPlugin() {
-	async function handleSignIn() {
-		try {
-			const Auth = (await import('aws-amplify')).Auth;
-			const result = await Auth.signIn('username', 'password');
-		} catch (error) {
-			console.log(error);
-		}
-	}
+	async function dontShakeOut() {}
 
 	return (
 		<div>
-			<h1>sign in with CognitoSignIn provider</h1>
-			<button onClick={() => handleSignIn()}>sign in</button>
-			<Link href="/signup">
-				<a>go to sign up</a>
-			</Link>
+			<h1>Test</h1>
 		</div>
 	);
 }
