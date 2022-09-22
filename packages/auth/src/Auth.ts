@@ -33,7 +33,7 @@ import {
 } from '@aws-sdk/client-cognito-identity-provider';
 
 function noShakeOut() {
-	//xstate
+	// xstate
 	console.log(createMachine);
 	console.log(spawn);
 	console.log(assign);
@@ -41,12 +41,18 @@ function noShakeOut() {
 	console.log(sendUpdate);
 
 	// @aws-sdk/client-cognito-identity
-	console.log(CognitoIdentityClient);
+	const idpClient = new CognitoIdentityClient({
+		region: 'us-west-2',
+		customUserAgent: 'custom-agent',
+	});
 	console.log(GetCredentialsForIdentityCommand);
 	console.log(GetIdCommand);
 
 	// @aws-sdk/client-cognito-identity-provider
-	console.log(CognitoIdentityProviderClient);
+	const upClient = new CognitoIdentityProviderClient({
+		region: 'us-west-2',
+		customUserAgent: 'custom-agent',
+	});
 	console.log(AssociateSoftwareTokenCommand);
 	console.log(ChangePasswordCommand);
 	console.log(ConfirmDeviceCommand);
