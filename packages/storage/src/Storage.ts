@@ -11,7 +11,7 @@
  * and limitations under the License.
  */
 
-import { ConsoleLogger as Logger, Parser } from '@aws-amplify/core';
+import { Amplify, ConsoleLogger as Logger, Parser } from '@aws-amplify/core';
 import { AWSS3Provider } from './providers';
 import {
 	StorageCopySource,
@@ -35,6 +35,7 @@ import { PutObjectCommandInput } from '@aws-sdk/client-s3';
 import { AWSS3UploadTask } from './providers/AWSS3UploadTask';
 
 const logger = new Logger('StorageClass');
+const loggerStorageInstance = new Logger('Storage'); // Logging relating to Storage instance management
 
 const DEFAULT_PROVIDER = 'AWSS3';
 /**
