@@ -56,7 +56,8 @@
     "./src/StorageHelper": "./src/StorageHelper-rn.js"
   },
   "browser": {
-    "crypto": false
+    "crypto": false,
+    "buffer": false
   },
   "module": "es/index.js",
   "jsnext:main": "es/index.js",
