@@ -4,9 +4,10 @@ auth:
       foo:
         name: test
         password: test
-store:
-  memory:
-    limit: 1000
+# store:
+#   memory:
+#     limit: 1000
+storage: ./storage
 uplinks:
   npmjs:
     url: https://registry.npmjs.org/

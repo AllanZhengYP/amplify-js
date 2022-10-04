@@ -19,3 +19,5 @@ packages/**/cypress/videos/
 yarn.lock
 package-lock.json
 packages/*/.watchmanconfig
+
+.github/actions/setup-verdaccio-action/storage
