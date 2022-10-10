@@ -1,0 +1,37 @@
+{
+  "name": "vite",
+  "version": "0.0.0",
+  "scripts": {
+    "vite:build": "vite build",
+    "esbuild:build": "node esbuild.config.mjs",
+    "postesbuild:build": "cp entries/esbuild/* dist/esbuild",
+    "rollup:build": "rollup --config rollup.config.js",
+    "postrollup:build": "cp entries/rollup/* dist/rollup",
+    "parcel:build": "parcel build ./entries/parcel/index.html --dist-dir ./dist/parcel --cache-dir ./dist/parcel/.parcel-cache --public-url . ",
+    "webpack4:build": "webpack -c webpack.config.js"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@babel/preset-react": "^7.18.6",
+    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
+    "@geut/esbuild-plugin-brode": "^2.0.14",
+    "@rollup/plugin-babel": "^5.3.1",
+    "@rollup/plugin-commonjs": "^22.0.2",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^14.1.0",
+    "@rollup/plugin-replace": "^4.0.0",
+    "@types/react": "^18.0.17",
+    "@types/react-dom": "^18.0.6",
+    "@vitejs/plugin-react": "^2.1.0",
+    "esbuild": "^0.15.10",
+    "parcel": "^2.7.0",
+    "rollup": "^2.79.1",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-terser": "^7.0.2",
+    "vite": "^3.1.0",
+    "webpack": "4.46.0"
+  }
+}
