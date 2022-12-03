@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // import { Completer } from './completer';
-import { Invocation } from './invocation';
+// import { Invocation } from './invocation';
+import { Machine } from './machine';
 import { MachineState } from './machineState';
 
 /**
@@ -17,62 +18,71 @@ export type MachineEventPayload = object;
 
 /**
  * The type accepted by Machine's send method
- * @typeParam PayloadType - The type of the Event's payload
- * @typeParam ContextType - The type of the target Machine's context
- * @param name - The event name; used when matching a transition
- * @param payload - The event payload
- * @param restingStates - The state names of the underlying machine which, when reached, will allow for the event to be dequeued
- * @param completer - A promise that will resolve when a restingState is reached
  */
 export type MachineEvent<PayloadType extends MachineEventPayload> = {
 	name: string;
 	payload: PayloadType;
-	restingStates: string[];
-	// completer?: Completer<ContextType>;
+	context?: Record<string, any>;
 	id?: string;
 };
 
 /**
- * The type accepted by Machine's send method
- * @typeParam PayloadType - The type of the Event's payload
- * @typeParam ContextType - The type of the target Machine's context
- * @param name - The event name; used when matching a transition
- * @param payload - The event payload
- * @param restingStates - The state names of the underlying machine which, when reached, will allow for the event to be dequeued
- * @param completer - A promise that will resolve when a restingState is reached
- */
-export type CurrentStateAndContext<
-	ContextType extends MachineContext,
-	PayloadType extends MachineEventPayload
-> = {
-	currentState: MachineState<ContextType, PayloadType>;
-	context: ContextType;
-};
-
-/**
  * The type accepted by the Machine constructor
- * @typeParam PayloadType - The type of the Event's payload
- * @param name - The Machine's name
- * @param states - An array of MachineStates
- * @param context - The Machine's extended state
- * @param initial - The name of the Machine's initial State
- * @param enqueueEvents - Flag to determine if events should be enqueued
  */
 export type StateMachineParams<ContextType extends MachineContext> = object & {
 	name: string;
 	states: MachineState<ContextType, MachineEventPayload>[];
 	context: ContextType;
 	initial: string;
-	enqueueEvents?: boolean;
+};
+
+export type InvocationEventTransition<
+	ContextType extends MachineContext,
+	PayloadType extends MachineEventPayload
+> = {
+	event: string;
+	childMachineEvent: string;
+	actions?: TransitionAction<ContextType, PayloadType>[];
+	guards?: TransitionGuard<ContextType, PayloadType>[];
+	reducers?: TransitionReducer<ContextType, PayloadType>[];
+};
+
+export type InvocationResultTransition<
+	ContextType extends MachineContext,
+	ChildMachineContextType extends MachineContext
+> = {
+	callMachineState: string;
+	actions?: InvocationResultTransitionAction<
+		ContextType,
+		ChildMachineContextType
+	>[];
+	guards?: InvocationResultTransitionGuard<
+		ContextType,
+		ChildMachineContextType
+	>[];
+	reducers?: InvocationResultTransitionReducer<
+		ContextType,
+		ChildMachineContextType
+	>[];
+};
+
+/**
+ * Invoke a substate machine. The sub-statemachine can only be invoked with eventful state transit
+ */
+export type Invocation<
+	ContextType extends MachineContext,
+	PayloadType extends MachineEventPayload,
+	ChildMachineContextType extends MachineContext
+> = {
+	eventTransitions: InvocationEventTransition<ContextType, PayloadType>[];
+	invokedMachine: Machine<ChildMachineContextType>;
+	onSuccess: InvocationResultTransition<ContextType, ChildMachineContextType>[];
+	onError: InvocationResultTransition<ContextType, ChildMachineContextType>[];
 };
 
 /**
  * The type accepted by the MachineState constructor
- * @typeParam ContextType - The type of the enclosing Machine's context
  * @typeParam PayloadType - The type of the Event's payload
- * @param name - The state name
- * @param transitions - The array of available transitions
- * @param invocation - An invocation to call when the State becomes the current state of enclosing Machine
  */
 export type MachineStateParams<
 	ContextType extends MachineContext,
@@ -80,7 +90,7 @@ export type MachineStateParams<
 > = {
 	name: string;
 	transitions?: StateTransition<ContextType, PayloadType>[];
-	invocation?: Invocation<any, MachineEventPayload>;
+	immediateTransitions?: ImmediateStateTransition<ContextType>[];
 };
 
 /**
@@ -102,6 +112,16 @@ export type StateTransition<
 	actions?: TransitionAction<ContextType, PayloadType>[];
 	guards?: TransitionGuard<ContextType, PayloadType>[];
 	reducers?: TransitionReducer<ContextType, PayloadType>[];
+};
+
+/**
+ * Similar to immediate in Robot
+ */
+export type ImmediateStateTransition<ContextType extends MachineContext> = {
+	nextState: string;
+	actions?: ImmediateTransitionAction<ContextType>[];
+	guards?: ImmediateTransitionGuard<ContextType>[];
+	reducers?: ImmediateTransitionReducer<ContextType>[];
 };
 
 /**
@@ -138,3 +158,30 @@ export type InvocationPromise<
 	ContextType extends MachineContext,
 	PayloadType extends MachineEventPayload
 > = (context: ContextType, event: MachineEvent<PayloadType>) => Promise<void>;
+
+export type ImmediateTransitionAction<ContextType extends MachineContext> = (
+	context: ContextType
+) => Promise<void>;
+
+export type ImmediateTransitionGuard<ContextType extends MachineContext> = (
+	context: ContextType
+) => boolean;
+
+export type ImmediateTransitionReducer<ContextType extends MachineContext> = (
+	context: ContextType
+) => ContextType;
+
+export type InvocationResultTransitionAction<
+	ContextType extends MachineContext,
+	ChildContextType extends MachineContext
+> = (context: ContextType, childContext: ChildContextType) => Promise<void>;
+
+export type InvocationResultTransitionGuard<
+	ContextType extends MachineContext,
+	ChildContextType extends MachineContext
+> = (context: ContextType, childContext: ChildContextType) => boolean;
+
+export type InvocationResultTransitionReducer<
+	ContextType extends MachineContext,
+	ChildContextType extends MachineContext
+> = (context: ContextType, childContext: ChildContextType) => ContextType;
