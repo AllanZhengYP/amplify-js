@@ -1,108 +1,89 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { HubClass } from '@aws-amplify/core/lib/Hub';
+import { HubClass } from '@aws-amplify/core/lib-esm/Hub';
 import {
-	ImmediateStateTransition,
 	MachineContext,
 	MachineEvent,
 	MachineEventPayload,
-	MachineStateParams,
 	StateTransition,
+	MachineState as IMachineState,
+	MachineStateParams,
+	MachineStateEventResponse,
+	Dispatcher,
 } from './types';
 
-export interface HandleEventOptions {
+interface MachineStateClassParams<
+	ContextType extends MachineContext,
+	PayloadType extends MachineEventPayload
+> extends MachineStateParams<ContextType, PayloadType> {
+	machineContext: ContextType;
+	machineManagerDispatcher: Dispatcher<PayloadType>;
 	hub: HubClass;
 	hubChannel: string;
 }
 
+/**
+ * @internal
+ */
 export class MachineState<
 	ContextType extends MachineContext,
 	PayloadType extends MachineEventPayload
-> {
+> implements IMachineState<ContextType, PayloadType>
+{
 	name: string;
-	transitions?: StateTransition<ContextType, PayloadType>[];
-	immdiateTransitions?: ImmediateStateTransition<ContextType>[];
-	constructor(params: MachineStateParams<ContextType, PayloadType>) {
-		this.name = params.name;
-		this.transitions = params.transitions;
-		this.immdiateTransitions = params.immediateTransitions;
+	transitions: StateTransition<ContextType, PayloadType>[];
+	private readonly machineContext: ContextType; // Use readonly to prevent re-assign of context reference
+	private readonly machineManagerDispatcher: Dispatcher<PayloadType>;
+
+	constructor(props: MachineStateClassParams<ContextType, PayloadType>) {
+		this.name = props.name;
+		this.transitions = props.transitions ?? [];
+		this.machineContext = props.machineContext;
+		this.machineManagerDispatcher = props.machineManagerDispatcher;
 	}
 
-	async handleEvent(
-		event: MachineEvent<PayloadType>,
-		machineContext: ContextType,
-		options: HandleEventOptions
-	): Promise<string> {
-		const transition = this.pickValidEventTransition(
-			event,
-			machineContext,
-			this.transitions
-		);
-		if (!transition) {
-			//TODO
-			console.error('TODO: no valid transition');
-			throw new Error('TODO: no valid transition');
+	send(
+		event: MachineEvent<PayloadType>
+	): MachineStateEventResponse<ContextType> {
+		const transition = this.getValidTransition(event);
+		const nextState = transition?.nextState ?? this.name;
+		let newContext = this.machineContext;
+		transition?.reducers?.forEach(reducer => {
+			newContext = reducer(newContext, event);
+		});
+		const response: MachineStateEventResponse<ContextType> = {
+			nextState,
+		};
+		if (newContext !== this.machineContext) {
+			response.newContext = newContext;
 		}
-		if (transition?.reducers) {
-			//TODO
-			console.log('TODO: handleEvent reducers');
+		if ((transition?.effects ?? []).length > 0) {
+			const promiseArr = transition!.effects!.map(effect =>
+				effect(newContext, event, this.machineManagerDispatcher)
+			);
+			// TODO: Concurrently running effects causes new events emitted in
+			// undetermined order. Should we run them in order?
+			response.effectsPromise = Promise.all(
+				promiseArr
+			) as unknown as Promise<void>;
 		}
-		if (transition?.actions) {
-			// TODO
-			console.log('TODO: handleEvent actions');
-		}
-		return transition.nextState;
+		return response;
 	}
 
-	async handleTransit(
-		machineContext: ContextType,
-		options: HandleEventOptions
-	): Promise<string | null> {
-		const transition = this.pickValidImmediateTransition(
-			machineContext,
-			this.immdiateTransitions
-		);
-		if (transition?.reducers) {
-			//TODO
-			console.log('TODO: handleTransit reducers');
-		}
-		if (transition?.actions) {
-			// TODO
-			console.log('TODO: handleTransit actions');
-		}
-		return transition?.nextState ?? null;
-	}
-
-	private pickValidEventTransition(
-		event: MachineEvent<PayloadType>,
-		machineContext: ContextType,
-		transitions: StateTransition<ContextType, PayloadType>[] = []
+	private getValidTransition(
+		event: MachineEvent<PayloadType>
 	): StateTransition<ContextType, PayloadType> | undefined {
-		const validTransitions = transitions.filter(transition => {
-			return transition?.guards?.every(guard => !guard(machineContext, event));
-		});
+		const validTransitions = this.transitions
+			.filter(transition => transition.event === event.name)
+			.filter(transition => {
+				return transition?.guards?.every(
+					guard => !guard(this.machineContext, event)
+				);
+			});
 		if (validTransitions.length === 0) {
-			return undefined;
+			return undefined; // TODO: should we do nothing on unknown event?
 		} else if (validTransitions.length > 1) {
-			//TODO
-			throw new Error('Got more than 1 valid transitions');
-		} else {
-			return validTransitions[0];
-		}
-	}
-
-	private pickValidImmediateTransition(
-		machineContext: ContextType,
-		transitions: ImmediateStateTransition<ContextType>[] = []
-	): ImmediateStateTransition<ContextType> | undefined {
-		const validTransitions = transitions.filter(transition => {
-			return transition?.guards?.every(guard => !guard(machineContext));
-		});
-		if (validTransitions.length === 0) {
-			return undefined;
-		} else if (validTransitions.length > 1) {
-			//TODO
 			throw new Error('Got more than 1 valid transitions');
 		} else {
 			return validTransitions[0];

@@ -14,31 +14,48 @@ import {
 } from './types';
 import { StateMachineHubEventName } from '../constants/StateMachineHubEventName';
 // TODO: Import from core once library build is resolved
-import { HubClass } from '@aws-amplify/core/lib/Hub';
+import { HubClass } from '@aws-amplify/core/lib-esm/Hub';
 
-export class Machine<ContextType extends MachineContext> {
+export class Machine<
+	ContextType extends MachineContext,
+	PayloadType extends MachineEventPayload
+> {
 	private _name: string;
-	private _states: Map<string, MachineState<ContextType, MachineEventPayload>>;
+	private _states = new Map<string, MachineState<ContextType, PayloadType>>();
 	private _context: ContextType;
-	private _current: MachineState<ContextType, MachineEventPayload>;
+	private _current: MachineState<ContextType, PayloadType>;
 	private _logger: Logger;
 	public hub: HubClass;
 	public hubChannel: string;
 	private _eventChannel: string;
-	private _queue: MachineEvent<MachineEventPayload>[];
-	private _queueIdle: boolean = true;
+	// private _queue: MachineEvent<PayloadType>[];
+	// private _queueIdle: boolean = true;
 
-	constructor(params: StateMachineParams<ContextType>) {
+	constructor(params: StateMachineParams<ContextType, PayloadType>) {
 		this._name = params.name;
-		this._states = this._createStateMap(params.states);
 		this._context = params.context;
-		this._queue = [];
-		this._current = this._states.get(params.initial) || this._states[0];
+		// this._queue = [];
 		this.hub = new HubClass('auth-state-machine');
 		this.hubChannel = `${this._name}-channel`;
 		this._eventChannel = `${this._name}-event-channel`;
-
 		this._logger = new Logger(this._name);
+
+		params.states
+			.map(
+				stateParams =>
+					new MachineState({
+						name: stateParams.name,
+						machineContext: this._context,
+						machineManagerDispatcher: params.machineManagerDispatcher,
+						hub: this.hub,
+						hubChannel: this.hubChannel,
+					})
+			)
+			.forEach(machineState => {
+				this._states.set(machineState.name, machineState);
+			});
+
+		this._current = this._states.get(params.initial) || this._states[0];
 
 		// this.hub.listen(this._eventChannel, hubEvent => {
 		// 	this._queue.push(hubEvent.payload.data.event);
@@ -55,11 +72,23 @@ export class Machine<ContextType extends MachineContext> {
 	 * @typeParam PayloadType - The type of payload received in current state
 	 * @param event - The dispatched Event
 	 */
-	async send<PayloadType extends MachineEventPayload>(
-		event: MachineEvent<PayloadType>
-	) {
+	async send(event: MachineEvent<PayloadType>) {
 		event.id = uuid();
-		this._queue.push(event);
+		const {
+			nextState: nextStateName,
+			newContext,
+			effectsPromise,
+		} = this._current.send(event);
+		const nextState = this._states.get(nextStateName);
+		if (!nextState) {
+			// TODO: handle invalid next state.
+			throw new Error('TODO: handle invalid next state.');
+		}
+		this._current = nextState;
+		if (newContext) {
+			this._context = newContext;
+		}
+		await effectsPromise;
 	}
 
 	// /**
@@ -148,28 +177,6 @@ export class Machine<ContextType extends MachineContext> {
 
 	// 	await this._enterState(validTransition, event!);
 	// }
-	protected async _processEvent(
-		event: MachineEvent<MachineEventPayload>
-	): Promise<void> {
-		const options = {
-			hub: this.hub,
-			hubChannel: this.hubChannel,
-		};
-		const nextState = await this._current.handleEvent(
-			event,
-			this._context,
-			options
-		);
-		this._current = this._states.get(nextState)!; // TODO: handle invalid statename
-		let immediateNextState: string | null = this._current.name;
-		while (immediateNextState) {
-			this._current = this._states.get(immediateNextState)!; // TODO: handle invalid statename
-			immediateNextState = await this._current.handleTransit(
-				this._context,
-				options
-			);
-		}
-	}
 
 	// private async _enterState<PayloadType extends MachineEventPayload>(
 	// 	transition: StateTransition<ContextType, PayloadType>,
@@ -224,15 +231,15 @@ export class Machine<ContextType extends MachineContext> {
 	// 	}
 	// }
 
-	//TODO: validate states with uniqueness on name (otherwise a dupe will just be overridden in Map)
-	private _createStateMap(
-		states: MachineState<ContextType, MachineEventPayload>[]
-	): Map<string, MachineState<ContextType, MachineEventPayload>> {
-		return states.reduce(function (map, obj) {
-			map.set(obj.name, obj);
-			return map;
-		}, new Map<string, MachineState<ContextType, MachineEventPayload>>());
-	}
+	// //TODO: validate states with uniqueness on name (otherwise a dupe will just be overridden in Map)
+	// private _createStateMap(
+	// 	states: MachineStateParams<ContextType, MachineEventPayload>[]
+	// ): Map<string, MachineState<ContextType, MachineEventPayload>> {
+	// 	return states.reduce(function (map, obj) {
+	// 		map.set(obj.name, obj);
+	// 		return map;
+	// 	}, new Map<string, MachineState<ContextType, MachineEventPayload>>());
+	// }
 
 	// private _broadCastTransition<PayloadType extends MachineEventPayload>(
 	// 	transition: StateTransition<ContextType, PayloadType>,
