@@ -11,18 +11,20 @@
 export type MachineContext = {};
 
 /**
- * Base type for a MachineEvent's payload
- */
-export type MachineEventPayload = {};
-
-/**
  * The type accepted by Machine's send method
  */
-export type MachineEvent<PayloadType extends MachineEventPayload> = {
+export type MachineEvent = {
 	name: string;
-	payload: PayloadType;
-	context?: Record<string, any>;
+	payload: unknown;
 	id?: string;
+};
+
+export type EventBroker<EventType extends MachineEvent> = {
+	dispatch: (event: EventType) => void;
+};
+
+export type EventConsumer<EventType extends MachineEvent> = {
+	accept: (event: EventType) => Promise<void>;
 };
 
 /**
@@ -30,79 +32,22 @@ export type MachineEvent<PayloadType extends MachineEventPayload> = {
  */
 export type StateMachineParams<
 	ContextType extends MachineContext,
-	PayloadType extends MachineEventPayload
+	EventType extends MachineEvent
 > = {
 	name: string;
-	states: MachineStateParams<ContextType, MachineEventPayload>[];
+	states: MachineStateParams<ContextType, EventType>[];
 	context: ContextType;
 	initial: string;
-	machineManagerDispatcher: Dispatcher<PayloadType>;
+	machineManagerBroker: EventBroker<EventType>;
 };
 
 export interface MachineStateParams<
 	ContextType extends MachineContext,
-	PayloadType extends MachineEventPayload
+	EventType extends MachineEvent
 > {
 	name: string;
-	transitions?: StateTransition<ContextType, PayloadType>[];
+	transitions?: StateTransition<ContextType, EventType>[];
 }
-
-// export type InvocationEventTransition<
-// 	ContextType extends MachineContext,
-// 	PayloadType extends MachineEventPayload
-// > = {
-// 	event: string;
-// 	childMachineEvent: string;
-// 	actions?: TransitionAction<ContextType, PayloadType>[];
-// 	guards?: TransitionGuard<ContextType, PayloadType>[];
-// 	reducers?: TransitionReducer<ContextType, PayloadType>[];
-// };
-
-// export type InvocationResultTransition<
-// 	ContextType extends MachineContext,
-// 	ChildMachineContextType extends MachineContext
-// > = {
-// 	callingMachineState: string;
-// 	actions?: InvocationResultTransitionAction<
-// 		ContextType,
-// 		ChildMachineContextType
-// 	>[];
-// 	guards?: InvocationResultTransitionGuard<
-// 		ContextType,
-// 		ChildMachineContextType
-// 	>[];
-// 	reducers?: InvocationResultTransitionReducer<
-// 		ContextType,
-// 		ChildMachineContextType
-// 	>[];
-// };
-
-// /**
-//  * Invoke a substate machine. The sub-statemachine can only be invoked with eventful state transit
-//  */
-// export type Invocation<
-// 	ContextType extends MachineContext,
-// 	PayloadType extends MachineEventPayload,
-// 	ChildMachineContextType extends MachineContext
-// > = {
-// 	eventTransitions: InvocationEventTransition<ContextType, PayloadType>[];
-// 	invokedMachine: Machine<ChildMachineContextType>;
-// 	onSuccess: InvocationResultTransition<ContextType, ChildMachineContextType>[];
-// 	onError: InvocationResultTransition<ContextType, ChildMachineContextType>[];
-// };
-
-// /**
-//  * The type accepted by the MachineState constructor
-//  * @typeParam PayloadType - The type of the Event's payload
-//  */
-// export type MachineStateParams<
-// 	ContextType extends MachineContext,
-// 	PayloadType extends MachineEventPayload
-// > = {
-// 	name: string;
-// 	transitions?: StateTransition<ContextType, PayloadType>[];
-// 	// immediateTransitions?: ImmediateStateTransition<ContextType>[];
-// };
 
 /**
  * The response from sending an event to a machine state.
@@ -122,18 +67,16 @@ export interface MachineStateEventResponse<ContextType extends MachineContext> {
 
 export interface MachineState<
 	ContextType extends MachineContext,
-	PayloadType extends MachineEventPayload
+	EventType extends MachineEvent
 > {
 	name: string;
-	send: (
-		event: MachineEvent<PayloadType>
-	) => MachineStateEventResponse<ContextType>;
+	accept: (event: EventType) => MachineStateEventResponse<ContextType>;
 }
 
 /**
  * The type representing a state transition
  * @typeParam ContextType - The type of the enclosing Machine's context
- * @typeParam PayloadType - The type of the enclosing State's event payload
+ * @typeParam MachineEvent - The type of the enclosing State's events
  * @param event - The name of the event that can trigger the Transition
  * @param nextState - The name of the State which will become the current State of the enclosing Machine, if the transition is triggered
  * @param guards An array of TransitionGuards, to be invoked before the transition is completed
@@ -142,97 +85,42 @@ export interface MachineState<
  */
 export type StateTransition<
 	ContextType extends MachineContext,
-	PayloadType extends MachineEventPayload
+	EventType extends MachineEvent
 > = {
-	event: string;
+	event: EventType['name'];
 	nextState: string;
-	// actions?: TransitionAction<ContextType, PayloadType>[];
-	guards?: TransitionGuard<ContextType, PayloadType>[];
-	reducers?: TransitionReducer<ContextType, PayloadType>[];
-	effects?: TransitionEffect<ContextType, PayloadType>[];
-};
-
-// /**
-//  * Similar to immediate in Robot
-//  */
-// export type ImmediateStateTransition<ContextType extends MachineContext> = {
-// 	nextState: string;
-// 	actions?: ImmediateTransitionAction<ContextType>[];
-// 	guards?: ImmediateTransitionGuard<ContextType>[];
-// 	reducers?: ImmediateTransitionReducer<ContextType>[];
-// };
-
-// /**
-//  * Type for a fire-and-forget action function
-//  * @typeParam ContextType - The type of the enclosing Machine's context
-//  * @typeParam PayloadType - The type of the Event's payload
-//  */
-// export type TransitionAction<
-// 	ContextType extends MachineContext,
-// 	PayloadType extends MachineEventPayload
-// > = (context: ContextType, event: MachineEvent<PayloadType>) => Promise<void>;
-
-export type Dispatcher<PayloadType extends MachineEventPayload> = {
-	send: (event: MachineEvent<PayloadType>) => Promise<void>;
+	// TODO: investigate whether we can narrow tye guards, reducers, effects'
+	// event type
+	guards?: TransitionGuard<ContextType, EventType>[];
+	reducers?: TransitionReducer<ContextType, EventType>[];
+	effects?: TransitionEffect<ContextType, EventType>[];
 };
 
 export type TransitionEffect<
 	ContextType extends MachineContext,
-	PayloadType extends MachineEventPayload
+	EventType extends MachineEvent
 > = (
 	context: ContextType,
-	event: MachineEvent<PayloadType>,
-	dispatcher: Dispatcher<PayloadType>
+	event: EventType,
+	eventBroker: EventBroker<EventType>
 ) => Promise<void>;
 
 /**
  * Type for a TransitionGuard, which can prevent the enclosing Transition from completing
  * @typeParam ContextType - The type of the enclosing Machine's context
- * @typeParam PayloadType - The type of the Event's payload
+ * @typeParam EventType - The type of the event
  */
 export type TransitionGuard<
 	ContextType extends MachineContext,
-	PayloadType extends MachineEventPayload
-> = (context: ContextType, event: MachineEvent<PayloadType>) => boolean;
+	EventType extends MachineEvent
+> = (context: ContextType, event: EventType) => boolean;
 
 /**
  * Type for a TransitionReducer, which is used to modify the enclosing Machine's Context
  * @typeParam ContextType - The type of the enclosing Machine's context
- * @typeParam PayloadType - The type of the Event's payload
+ * @typeParam EventType - The type of the event
  */
 export type TransitionReducer<
 	ContextType extends MachineContext,
-	PayloadType extends MachineEventPayload
-> = (context: ContextType, event: MachineEvent<PayloadType>) => ContextType;
-
-// export type InvocationPromise<
-// 	ContextType extends MachineContext,
-// 	PayloadType extends MachineEventPayload
-// > = (context: ContextType, event: MachineEvent<PayloadType>) => Promise<void>;
-
-// export type ImmediateTransitionAction<ContextType extends MachineContext> = (
-// 	context: ContextType
-// ) => Promise<void>;
-
-// export type ImmediateTransitionGuard<ContextType extends MachineContext> = (
-// 	context: ContextType
-// ) => boolean;
-
-// export type ImmediateTransitionReducer<ContextType extends MachineContext> = (
-// 	context: ContextType
-// ) => ContextType;
-
-// export type InvocationResultTransitionAction<
-// 	ContextType extends MachineContext,
-// 	ChildContextType extends MachineContext
-// > = (context: ContextType, childContext: ChildContextType) => Promise<void>;
-
-// export type InvocationResultTransitionGuard<
-// 	ContextType extends MachineContext,
-// 	ChildContextType extends MachineContext
-// > = (context: ContextType, childContext: ChildContextType) => boolean;
-
-// export type InvocationResultTransitionReducer<
-// 	ContextType extends MachineContext,
-// 	ChildContextType extends MachineContext
-// > = (context: ContextType, childContext: ChildContextType) => ContextType;
+	EventType extends MachineEvent
+> = (context: ContextType, event: EventType) => ContextType;

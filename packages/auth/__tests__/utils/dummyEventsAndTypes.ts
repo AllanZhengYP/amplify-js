@@ -2,64 +2,62 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Machine } from '../../src/stateMachine/machine';
-import {
-	MachineEvent,
-	MachineContext,
-	MachineEventPayload,
-} from '../../src/stateMachine/types';
+import { MachineContext } from '../../src/stateMachine/types';
 
 export const state1Name = 'State1';
 export const state2Name = 'State2';
 export const state3Name = 'State3';
 
-export const goodEvent1: MachineEvent<State1Payload> = {
-	name: 'event1',
+export const goodEvent1 = {
+	name: 'event1' as const,
 	payload: {
 		p1: 'good',
 	},
-	restingStates: [state2Name],
 };
 
-export const badEvent1: MachineEvent<State1Payload> = {
-	name: 'event1',
+export const badEvent1 = {
+	name: 'event1' as const,
 	payload: {
 		p1: 'bad',
 	},
-	restingStates: [state2Name],
 };
 
-export const goodEvent2: MachineEvent<State2Payload> = {
-	name: 'event2',
+export const goodEvent2 = {
+	name: 'event2' as const,
 	payload: {
 		p2: 'good',
 	},
-	restingStates: [state3Name],
 };
 
-export const badEvent2: MachineEvent<State2Payload> = {
-	name: 'event2',
+export const badEvent2 = {
+	name: 'event2' as const,
 	payload: {
 		p2: 'bad',
 	},
-	restingStates: [state3Name],
 };
+
+export type Events =
+	| typeof goodEvent1
+	| typeof badEvent1
+	| typeof goodEvent2
+	| typeof badEvent2;
 
 export type DummyContext = MachineContext & {
 	testSource: string;
 	testFn?: jest.Mock<any, any>;
 	optional1?: string;
 	optional2?: string;
-	actor?: Machine<DummyContext>;
+	actor?: Machine<DummyContext, Events>;
 };
 
-export type State1Payload = MachineEventPayload & {
+export type State1Payload = {
 	p1?: string;
 };
 
-export type State2Payload = MachineEventPayload & {
+export type State2Payload = {
 	p2?: string;
 };
 
-export type State3Payload = MachineEventPayload & {
+export type State3Payload = {
 	p3?: string;
 };

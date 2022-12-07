@@ -1,52 +1,43 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Logger } from '@aws-amplify/core';
 import { MachineState } from './MachineState';
 import { v4 as uuid } from 'uuid';
 import {
+	EventConsumer,
 	MachineContext,
-	MachineEventPayload,
 	MachineEvent,
 	StateMachineParams,
-	// StateTransition,
-	// CurrentStateAndContext,
 } from './types';
-import { StateMachineHubEventName } from '../constants/StateMachineHubEventName';
 // TODO: Import from core once library build is resolved
 import { HubClass } from '@aws-amplify/core/lib-esm/Hub';
 
 export class Machine<
 	ContextType extends MachineContext,
-	PayloadType extends MachineEventPayload
-> {
+	EventType extends MachineEvent
+> implements EventConsumer<EventType>
+{
 	private _name: string;
-	private _states = new Map<string, MachineState<ContextType, PayloadType>>();
+	private _states = new Map<string, MachineState<ContextType, EventType>>();
 	private _context: ContextType;
-	private _current: MachineState<ContextType, PayloadType>;
-	private _logger: Logger;
+	private _current: MachineState<ContextType, EventType>;
 	public hub: HubClass;
 	public hubChannel: string;
-	private _eventChannel: string;
-	// private _queue: MachineEvent<PayloadType>[];
-	// private _queueIdle: boolean = true;
 
-	constructor(params: StateMachineParams<ContextType, PayloadType>) {
+	constructor(params: StateMachineParams<ContextType, EventType>) {
 		this._name = params.name;
 		this._context = params.context;
-		// this._queue = [];
 		this.hub = new HubClass('auth-state-machine');
 		this.hubChannel = `${this._name}-channel`;
-		this._eventChannel = `${this._name}-event-channel`;
-		this._logger = new Logger(this._name);
 
 		params.states
 			.map(
 				stateParams =>
 					new MachineState({
 						name: stateParams.name,
+						transitions: stateParams.transitions,
 						machineContext: this._context,
-						machineManagerDispatcher: params.machineManagerDispatcher,
+						machineManagerBroker: params.machineManagerBroker,
 						hub: this.hub,
 						hubChannel: this.hubChannel,
 					})
@@ -56,14 +47,14 @@ export class Machine<
 			});
 
 		this._current = this._states.get(params.initial) || this._states[0];
+	}
 
-		// this.hub.listen(this._eventChannel, hubEvent => {
-		// 	this._queue.push(hubEvent.payload.data.event);
-		// 	if (this._queueIdle) {
-		// 		this._queueIdle = false;
-		// 		this._queueProcessor();
-		// 	}
-		// });
+	getCurrentState() {
+		return {
+			// TODO: we can infer all the possible state names with some TS gymnastics
+			currentState: this._current.name,
+			context: { ...this._context },
+		};
 	}
 
 	/**
@@ -72,13 +63,13 @@ export class Machine<
 	 * @typeParam PayloadType - The type of payload received in current state
 	 * @param event - The dispatched Event
 	 */
-	async send(event: MachineEvent<PayloadType>) {
+	async accept(event: EventType) {
 		event.id = uuid();
 		const {
 			nextState: nextStateName,
 			newContext,
 			effectsPromise,
-		} = this._current.send(event);
+		} = this._current.accept(event);
 		const nextState = this._states.get(nextStateName);
 		if (!nextState) {
 			// TODO: handle invalid next state.

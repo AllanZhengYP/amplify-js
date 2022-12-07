@@ -5,20 +5,19 @@ import { HubClass } from '@aws-amplify/core/lib-esm/Hub';
 import {
 	MachineContext,
 	MachineEvent,
-	MachineEventPayload,
 	StateTransition,
 	MachineState as IMachineState,
 	MachineStateParams,
 	MachineStateEventResponse,
-	Dispatcher,
+	EventBroker,
 } from './types';
 
 interface MachineStateClassParams<
 	ContextType extends MachineContext,
-	PayloadType extends MachineEventPayload
-> extends MachineStateParams<ContextType, PayloadType> {
+	EventType extends MachineEvent
+> extends MachineStateParams<ContextType, EventType> {
 	machineContext: ContextType;
-	machineManagerDispatcher: Dispatcher<PayloadType>;
+	machineManagerBroker: EventBroker<EventType>;
 	hub: HubClass;
 	hubChannel: string;
 }
@@ -28,24 +27,22 @@ interface MachineStateClassParams<
  */
 export class MachineState<
 	ContextType extends MachineContext,
-	PayloadType extends MachineEventPayload
-> implements IMachineState<ContextType, PayloadType>
+	EventType extends MachineEvent
+> implements IMachineState<ContextType, EventType>
 {
 	name: string;
-	transitions: StateTransition<ContextType, PayloadType>[];
+	transitions: StateTransition<ContextType, EventType>[];
 	private readonly machineContext: ContextType; // Use readonly to prevent re-assign of context reference
-	private readonly machineManagerDispatcher: Dispatcher<PayloadType>;
+	private readonly machineManagerBroker: EventBroker<EventType>;
 
-	constructor(props: MachineStateClassParams<ContextType, PayloadType>) {
+	constructor(props: MachineStateClassParams<ContextType, EventType>) {
 		this.name = props.name;
 		this.transitions = props.transitions ?? [];
 		this.machineContext = props.machineContext;
-		this.machineManagerDispatcher = props.machineManagerDispatcher;
+		this.machineManagerBroker = props.machineManagerBroker;
 	}
 
-	send(
-		event: MachineEvent<PayloadType>
-	): MachineStateEventResponse<ContextType> {
+	accept(event: EventType): MachineStateEventResponse<ContextType> {
 		const transition = this.getValidTransition(event);
 		const nextState = transition?.nextState ?? this.name;
 		let newContext = this.machineContext;
@@ -60,7 +57,7 @@ export class MachineState<
 		}
 		if ((transition?.effects ?? []).length > 0) {
 			const promiseArr = transition!.effects!.map(effect =>
-				effect(newContext, event, this.machineManagerDispatcher)
+				effect(newContext, event, this.machineManagerBroker)
 			);
 			// TODO: Concurrently running effects causes new events emitted in
 			// undetermined order. Should we run them in order?
@@ -72,14 +69,15 @@ export class MachineState<
 	}
 
 	private getValidTransition(
-		event: MachineEvent<PayloadType>
-	): StateTransition<ContextType, PayloadType> | undefined {
+		event: EventType
+	): StateTransition<ContextType, EventType> | undefined {
 		const validTransitions = this.transitions
 			.filter(transition => transition.event === event.name)
 			.filter(transition => {
-				return transition?.guards?.every(
-					guard => !guard(this.machineContext, event)
+				const blocked = transition?.guards?.some(guard =>
+					guard(this.machineContext, event)
 				);
+				return !blocked;
 			});
 		if (validTransitions.length === 0) {
 			return undefined; // TODO: should we do nothing on unknown event?
