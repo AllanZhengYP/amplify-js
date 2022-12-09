@@ -8,46 +8,64 @@ import {
 	MachineContext,
 	MachineEvent,
 	StateMachineParams,
+	MachineStateParams,
+	StateTransitions,
 } from './types';
 // TODO: Import from core once library build is resolved
 import { HubClass } from '@aws-amplify/core/lib-esm/Hub';
 
+/**
+ * A Finite state machine implementation.
+ * @typeParam ContextType - The type of the enclosing Machine's context.
+ * @typeParam EventTypes - The type of all the possible events. Expecting a union of {@link MachineEvent} types.
+ * @typeParam StateNames - The type of all the state names. Expecting a union of strings.
+ */
 export class Machine<
 	ContextType extends MachineContext,
-	EventType extends MachineEvent
-> implements EventConsumer<EventType>
+	EventTypes extends MachineEvent,
+	StateNames extends string
+> implements EventConsumer<EventTypes>
 {
 	private _name: string;
-	private _states = new Map<string, MachineState<ContextType, EventType>>();
+	private _states: Record<
+		StateNames,
+		MachineState<ContextType, EventTypes, StateNames>
+	>;
 	private _context: ContextType;
-	private _current: MachineState<ContextType, EventType>;
+	private _current: MachineState<ContextType, EventTypes, StateNames>;
 	public hub: HubClass;
 	public hubChannel: string;
 
-	constructor(params: StateMachineParams<ContextType, EventType>) {
+	constructor(params: StateMachineParams<ContextType, EventTypes, StateNames>) {
 		this._name = params.name;
 		this._context = params.context;
 		this.hub = new HubClass('auth-state-machine');
 		this.hubChannel = `${this._name}-channel`;
 
 		// TODO: validate FSM
-		params.states
-			.map(
-				stateParams =>
-					new MachineState({
-						name: stateParams.name,
-						transitions: stateParams.transitions,
-						machineContext: this._copyContext(this._context),
-						machineManagerBroker: params.machineManagerBroker,
-						hub: this.hub,
-						hubChannel: this.hubChannel,
-					})
-			)
-			.forEach(machineState => {
-				this._states.set(machineState.name, machineState);
-			});
+		// @ts-ignore TODO: make TSC happy
+		this._states = Object.fromEntries(
+			Object.entries(params.states).map(([stateName, transitions]) => [
+				stateName as StateNames,
+				new MachineState({
+					name: stateName,
+					transitions: transitions as StateTransitions<
+						ContextType,
+						EventTypes,
+						StateNames
+					>,
+					// Use closure to share reference of machine context across the states
+					machineContextGetter: () => this._context,
+					machineManager: params.machineManager,
+					hub: this.hub,
+					hubChannel: this.hubChannel,
+				}),
+			])
+		);
 
-		this._current = this._states.get(params.initial) || this._states[0];
+		this._current =
+			this._states[params.initial] ||
+			this._states[Object.keys(params.states)[0]];
 	}
 
 	getCurrentState() {
@@ -60,18 +78,16 @@ export class Machine<
 
 	/**
 	 * Receives an event for immediate processing
-	 *
-	 * @typeParam PayloadType - The type of payload received in current state
-	 * @param event - The dispatched Event
+	 * @param event - The dispatched Event.
 	 */
-	async accept(event: EventType) {
+	async accept(event: EventTypes) {
 		event.id = uuid();
 		const {
 			nextState: nextStateName,
 			newContext,
 			effectsPromise,
 		} = this._current.accept(event);
-		const nextState = this._states.get(nextStateName);
+		const nextState = this._states[nextStateName];
 		if (!nextState) {
 			// TODO: handle invalid next state.
 			throw new Error('TODO: handle invalid next state.');

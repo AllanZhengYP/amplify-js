@@ -6,19 +6,22 @@ import { HubClass } from '@aws-amplify/core/lib-esm/Hub';
 import {
 	MachineContext,
 	MachineEvent,
-	StateTransition,
 	MachineState as IMachineState,
-	MachineStateParams,
 	MachineStateEventResponse,
 	EventBroker,
+	StateTransition,
+	StateTransitions,
 } from './types';
 
 interface MachineStateClassParams<
 	ContextType extends MachineContext,
-	EventType extends MachineEvent
-> extends MachineStateParams<ContextType, EventType> {
-	machineContext: ContextType;
-	machineManagerBroker: EventBroker<EventType>;
+	EventType extends MachineEvent,
+	StateNames extends string
+> {
+	name: string;
+	transitions: StateTransitions<ContextType, EventType, StateNames>;
+	machineContextGetter: () => ContextType;
+	machineManagerBroker: EventBroker<MachineEvent>;
 	hub: HubClass;
 	hubChannel: string;
 }
@@ -28,20 +31,23 @@ interface MachineStateClassParams<
  */
 export class MachineState<
 	ContextType extends MachineContext,
-	EventType extends MachineEvent
+	EventType extends MachineEvent,
+	StateNames extends string
 > implements IMachineState<ContextType, EventType>
 {
 	name: string;
-	transitions: StateTransition<ContextType, EventType>[];
-	private readonly machineContext: ContextType; // Use readonly to prevent re-assign of context reference
-	private readonly machineManagerBroker: EventBroker<EventType>;
+	transitions: StateTransitions<ContextType, EventType, StateNames>;
+	private readonly machineContextGetter: () => ContextType; // Use readonly to prevent re-assign of context reference
+	private readonly machineManagerBroker: EventBroker<MachineEvent>;
 	private readonly hub: HubClass;
 	private readonly hubChannel: string;
 
-	constructor(props: MachineStateClassParams<ContextType, EventType>) {
+	constructor(
+		props: MachineStateClassParams<ContextType, EventType, StateNames>
+	) {
 		this.name = props.name;
 		this.transitions = props.transitions ?? [];
-		this.machineContext = props.machineContext;
+		this.machineContextGetter = props.machineContextGetter;
 		this.machineManagerBroker = props.machineManagerBroker;
 		this.hub = props.hub;
 		this.hubChannel = props.hubChannel;
@@ -50,14 +56,15 @@ export class MachineState<
 	accept(event: EventType): MachineStateEventResponse<ContextType> {
 		const transition = this.getValidTransition(event);
 		const nextState = transition?.nextState ?? this.name;
-		let newContext = this.machineContext;
+		const oldContext = this.machineContextGetter();
+		let newContext = oldContext;
 		transition?.reducers?.forEach(reducer => {
 			newContext = reducer(newContext, event);
 		});
 		const response: MachineStateEventResponse<ContextType> = {
 			nextState,
 		};
-		if (newContext !== this.machineContext) {
+		if (newContext !== oldContext) {
 			response.newContext = newContext;
 		}
 		if ((transition?.effects ?? []).length > 0) {
@@ -75,21 +82,22 @@ export class MachineState<
 
 	private getValidTransition(
 		event: EventType
-	): StateTransition<ContextType, EventType> | undefined {
-		const validTransitions = this.transitions
-			.filter(transition => transition.event === event.name)
-			.filter(transition => {
+	): StateTransition<ContextType, EventType, StateNames> | undefined {
+		const context = this.machineContextGetter();
+		const validTransitions = this.transitions[event.name]?.filter(
+			transition => {
 				const blocked = transition?.guards?.some(guard =>
-					guard(this.machineContext, event)
+					guard(context, event)
 				);
 				return !blocked;
-			});
+			}
+		);
 		if (validTransitions.length === 0) {
 			this.hub.dispatch(this.hubChannel, {
 				event: StateMachineHubEventName.NULL_TRANSITION,
 				data: {
 					state: this.name,
-					context: this.machineContext,
+					context: context,
 					event,
 				},
 			});

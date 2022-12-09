@@ -1,10 +1,3 @@
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
-
-// import { Completer } from './completer';
-// import { Invocation } from './invocation';
-// import { Machine } from './machine';
-
 /**
  * Base type for a Machine's context
  */
@@ -29,25 +22,123 @@ export type EventConsumer<EventType extends MachineEvent> = {
 
 /**
  * The type accepted by the Machine constructor
+ * @typeParam ContextType - The type of the enclosing Machine's context.
+ * @typeParam EventTypes - The type of all the possible events. Expecting a union of {@link MachineEvent} types.
+ * @typeParam StateNames - The type of all the state names. Expecting a union of strings.
+ * @param name - The name of the Machine.
+ * @param states - A map of all possible states and their transitions.
+ * @param context - Inital context of the Machine.
+ * @param initial - The name of the initial state.
+ * @param machineManager - The {@link EventBroker} that accept events emitted from state transitions.
  */
 export type StateMachineParams<
 	ContextType extends MachineContext,
-	EventType extends MachineEvent
+	EventTypes extends MachineEvent,
+	StateNames extends string
 > = {
 	name: string;
-	states: MachineStateParams<ContextType, EventType>[];
+	states: MachineStateParams<ContextType, EventTypes, StateNames>;
 	context: ContextType;
-	initial: string;
-	machineManagerBroker: EventBroker<EventType>;
+	initial: StateNames;
+	machineManager: EventBroker<MachineEvent>;
 };
 
-export interface MachineStateParams<
+/**
+ * A map of all possible machine states and their transitions.
+ * @typeParam ContextType - The type of the enclosing Machine's context.
+ * @typeParam EventTypes - The type of all the possible events. Expecting a union of {@link MachineEvent} types.
+ * @typeParam StateNames - The type of all the state names. Expecting a union of strings.
+ */
+export type MachineStateParams<
+	ContextType extends MachineContext,
+	EventTypes extends MachineEvent,
+	StateNames extends string
+> = {
+	[name in StateNames]: StateTransitions<ContextType, EventTypes, StateNames>;
+};
+
+/**
+ * The map interface instructing a Machine's behavior in certain state
+ * receiving given events.
+ * @typeParam ContextType - The type of the enclosing Machine's context.
+ * @typeParam EventTypes - The type of all the possible events. Expecting a union of {@link MachineEvent} types.
+ * @typeParam StateNames - The type of all the state names. Expecting a union of strings.
+ */
+export type StateTransitions<
+	ContextType extends MachineContext,
+	EventTypes extends MachineEvent,
+	StateNames extends string
+> = {
+	[event in EventTypes['name']]?: StateTransition<
+		ContextType,
+		Extract<EventTypes, { name: event }>,
+		StateNames
+	>;
+};
+
+/**
+ * The type representing a state transition
+ * @typeParam ContextType - The type of the enclosing Machine's context
+ * @typeParam EventType - The type of event being handled.
+ * @typeParam StateNames - The type of all the state names. Expecting a union of strings.
+ * @param nextState - The name of the State which will become the current State of the enclosing Machine, if the transition is triggered.
+ * @param guards - An array of {@link TransitionGuard}, to be invoked before the transition is completed.
+ * @param reducers - An array of {@link TransitionReducer}, to be invoked when the transition is completed.
+ * @param effects - An array of {@link TransitionEffect}, to be invoked when the transition is completed.
+ */
+export type StateTransition<
+	ContextType extends MachineContext,
+	EventType extends MachineEvent,
+	StateNames extends string
+> = {
+	nextState: StateNames;
+	guards?: TransitionGuard<ContextType, EventType>[];
+	reducers?: TransitionReducer<ContextType, EventType>[];
+	effects?: TransitionEffect<ContextType, EventType>[];
+};
+
+/**
+ * The effect a transition.
+ * @typeParam ContextType - The type of the enclosing Machine's context.
+ * @typeParam EventType - The type of event being handled.
+ * @param context - The context of the Machine.
+ * @param event - The event being handled.
+ * @param eventBroker - The event broker handling events may emitted from effect.
+ */
+export type TransitionEffect<
 	ContextType extends MachineContext,
 	EventType extends MachineEvent
-> {
-	name: string;
-	transitions?: StateTransition<ContextType, EventType>[];
-}
+> = (
+	context: ContextType,
+	event: EventType,
+	eventBroker: EventBroker<MachineEvent>
+) => Promise<void>;
+
+/**
+ * Type for a TransitionGuard, which can prevent the enclosing Transition from completing
+ * @typeParam ContextType - The type of the enclosing Machine's context
+ * @typeParam EventType - The type of event being handled.
+ * @param context - The context of the Machine.
+ * @param event - The event being handled.
+ * @returns If `true`, the transition will be prevented.
+ */
+export type TransitionGuard<
+	ContextType extends MachineContext,
+	EventType extends MachineEvent
+> = (context: ContextType, event: EventType) => boolean;
+
+/**
+ * Type for a TransitionReducer, which is used to modify the enclosing Machine's Context
+ * @typeParam ContextType - The type of the enclosing Machine's context
+ * @typeParam EventType - The type of event being handled.
+ * @param context - The context of the Machine.
+ * @param event - The event being handled.
+ * @returns The new state machine context.
+ */
+export type TransitionReducer<
+	ContextType extends MachineContext,
+	EventType extends MachineEvent
+> = (context: ContextType, event: EventType) => ContextType;
 
 /**
  * The response from sending an event to a machine state.
@@ -58,6 +149,8 @@ export interface MachineStateParams<
  * transit effects are resolved. {@link StateTransition.effects}
  * @param newContext - The updated machine context after running the associated
  * state transit reducers. {@link StateTransition.reducers}
+ *
+ * @internal
  */
 export interface MachineStateEventResponse<ContextType extends MachineContext> {
 	nextState: string;
@@ -65,6 +158,11 @@ export interface MachineStateEventResponse<ContextType extends MachineContext> {
 	effectsPromise?: Promise<unknown>;
 }
 
+/**
+ * Interface of a Machine state implementation.
+ *
+ * @internal
+ */
 export interface MachineState<
 	ContextType extends MachineContext,
 	EventType extends MachineEvent
@@ -72,55 +170,3 @@ export interface MachineState<
 	name: string;
 	accept: (event: EventType) => MachineStateEventResponse<ContextType>;
 }
-
-/**
- * The type representing a state transition
- * @typeParam ContextType - The type of the enclosing Machine's context
- * @typeParam MachineEvent - The type of the enclosing State's events
- * @param event - The name of the event that can trigger the Transition
- * @param nextState - The name of the State which will become the current State of the enclosing Machine, if the transition is triggered
- * @param guards An array of TransitionGuards, to be invoked before the transition is completed
- * @param reducers An array of TransitionReducers, to be invoked when the transition is completed
- * @param effects TBD
- */
-export type StateTransition<
-	ContextType extends MachineContext,
-	EventType extends MachineEvent
-> = {
-	event: EventType['name'];
-	nextState: string;
-	// TODO: investigate whether we can narrow tye guards, reducers, effects'
-	// event type
-	guards?: TransitionGuard<ContextType, EventType>[];
-	reducers?: TransitionReducer<ContextType, EventType>[];
-	effects?: TransitionEffect<ContextType, EventType>[];
-};
-
-export type TransitionEffect<
-	ContextType extends MachineContext,
-	EventType extends MachineEvent
-> = (
-	context: ContextType,
-	event: EventType,
-	eventBroker: EventBroker<EventType>
-) => Promise<void>;
-
-/**
- * Type for a TransitionGuard, which can prevent the enclosing Transition from completing
- * @typeParam ContextType - The type of the enclosing Machine's context
- * @typeParam EventType - The type of the event
- */
-export type TransitionGuard<
-	ContextType extends MachineContext,
-	EventType extends MachineEvent
-> = (context: ContextType, event: EventType) => boolean;
-
-/**
- * Type for a TransitionReducer, which is used to modify the enclosing Machine's Context
- * @typeParam ContextType - The type of the enclosing Machine's context
- * @typeParam EventType - The type of the event
- */
-export type TransitionReducer<
-	ContextType extends MachineContext,
-	EventType extends MachineEvent
-> = (context: ContextType, event: EventType) => ContextType;

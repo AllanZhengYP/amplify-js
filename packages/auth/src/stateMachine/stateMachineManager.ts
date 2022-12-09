@@ -1,4 +1,5 @@
 import {
+	EventBroker,
 	EventConsumer,
 	MachineContext,
 	MachineEvent,
@@ -17,7 +18,7 @@ export class MachineManager<
 	accept(event: MachineEvent): Promise<void> {}
 }
 
-class MachineManagerInternalEventQueue {
+class MachineManagerInternalEventQueue implements EventBroker<> {
 	private _queue: MachineEvent<MachineEventPayload>[] = [];
 
 	send() {}
