@@ -73,7 +73,7 @@ export type StateTransitions<
 		ContextType,
 		Extract<EventTypes, { name: event }>,
 		StateNames
-	>;
+	>[];
 };
 
 /**
@@ -139,6 +139,21 @@ export type TransitionReducer<
 	ContextType extends MachineContext,
 	EventType extends MachineEvent
 > = (context: ContextType, event: EventType) => ContextType;
+
+/**
+ * The type describing Machine's current status
+ * @typeParam PayloadType - The type of the Event's payload
+ * @typeParam StateNames - The type of all the state names.
+ * @param currentState - The current state name.
+ * @param context - The current Machine context
+ */
+export type CurrentStateAndContext<
+	ContextType extends MachineContext,
+	StateNames extends string
+> = {
+	currentState: StateNames;
+	context: ContextType;
+};
 
 /**
  * The response from sending an event to a machine state.

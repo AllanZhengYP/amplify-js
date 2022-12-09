@@ -4,11 +4,11 @@
 import { MachineState } from './MachineState';
 import { v4 as uuid } from 'uuid';
 import {
+	CurrentStateAndContext,
 	EventConsumer,
 	MachineContext,
 	MachineEvent,
 	StateMachineParams,
-	MachineStateParams,
 	StateTransitions,
 } from './types';
 // TODO: Import from core once library build is resolved
@@ -43,34 +43,37 @@ export class Machine<
 		this.hubChannel = `${this._name}-channel`;
 
 		// TODO: validate FSM
-		// @ts-ignore TODO: make TSC happy
-		this._states = Object.fromEntries(
-			Object.entries(params.states).map(([stateName, transitions]) => [
-				stateName as StateNames,
-				new MachineState({
-					name: stateName,
-					transitions: transitions as StateTransitions<
-						ContextType,
-						EventTypes,
-						StateNames
-					>,
-					// Use closure to share reference of machine context across the states
+		this._states = Object.entries<
+			StateTransitions<ContextType, EventTypes, StateNames>
+		>(params.states as any)
+			.map(([stateName, transitions]) => {
+				const castedStateName = stateName as StateNames;
+				const machineState = new MachineState<
+					ContextType,
+					EventTypes,
+					StateNames
+				>({
+					name: castedStateName,
+					transitions: transitions,
 					machineContextGetter: () => this._context,
 					machineManager: params.machineManager,
 					hub: this.hub,
 					hubChannel: this.hubChannel,
-				}),
-			])
-		);
+				});
+				return [castedStateName, machineState] as const;
+			})
+			.reduce((prev, [stateName, transitions]) => {
+				prev[stateName as string] = transitions;
+				return prev;
+			}, {} as Record<StateNames, MachineState<ContextType, EventTypes, StateNames>>);
 
 		this._current =
 			this._states[params.initial] ||
 			this._states[Object.keys(params.states)[0]];
 	}
 
-	getCurrentState() {
+	getCurrentState(): CurrentStateAndContext<ContextType, StateNames> {
 		return {
-			// TODO: we can infer all the possible state names with some TS gymnastics
 			currentState: this._current.name,
 			context: { ...this._context },
 		};
@@ -97,9 +100,5 @@ export class Machine<
 			this._context = newContext;
 		}
 		await effectsPromise;
-	}
-
-	private _copyContext<T extends object>(source: T): T {
-		return JSON.parse(JSON.stringify(source));
 	}
 }

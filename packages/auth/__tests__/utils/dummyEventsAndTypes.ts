@@ -1,63 +1,27 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Machine } from '../../src/stateMachine/machine';
-import { MachineContext } from '../../src/stateMachine/types';
+export type StateNames = 'State1' | 'State2' | 'State3';
 
-export const state1Name = 'State1';
-export const state2Name = 'State2';
-export const state3Name = 'State3';
-
-export const goodEvent1 = {
-	name: 'event1' as const,
+export type Event1 = {
+	name: 'event1';
 	payload: {
-		p1: 'good',
-	},
+		p1: 'good' | 'bad';
+	};
 };
 
-export const badEvent1 = {
-	name: 'event1' as const,
+export type Event2 = {
+	name: 'event2';
 	payload: {
-		p1: 'bad',
-	},
+		p2: 'good' | 'bad';
+	};
 };
 
-export const goodEvent2 = {
-	name: 'event2' as const,
-	payload: {
-		p2: 'good',
-	},
-};
+export type Events = Event1 | Event2;
 
-export const badEvent2 = {
-	name: 'event2' as const,
-	payload: {
-		p2: 'bad',
-	},
-};
-
-export type Events =
-	| typeof goodEvent1
-	| typeof badEvent1
-	| typeof goodEvent2
-	| typeof badEvent2;
-
-export type DummyContext = MachineContext & {
+export type DummyContext = {
 	testSource: string;
 	testFn?: jest.Mock<any, any>;
 	optional1?: string;
 	optional2?: string;
-	actor?: Machine<DummyContext, Events>;
-};
-
-export type State1Payload = {
-	p1?: string;
-};
-
-export type State2Payload = {
-	p2?: string;
-};
-
-export type State3Payload = {
-	p3?: string;
 };
