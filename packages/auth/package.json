@@ -16,7 +16,7 @@
     "access": "public"
   },
   "scripts": {
-    "test": "yarn lint --fix && jest -w 1 --coverage",
+    "test": "yarn lint --fix && jest -w 1 --coverage __tests__/state-machine-*",
     "test:size": "size-limit",
     "build-with-test": "npm test && npm run build",
     "build:cjs": "node ./build es5 && webpack && webpack --config ./webpack.config.dev.js",
@@ -46,7 +46,8 @@
     "src"
   ],
   "dependencies": {
-    "@aws-amplify/core": "4.7.6",
+		"@aws-amplify/core": "5.0.11",
+		"@aws-sdk/client-cognito-identity-provider": "3.6.1",
     "uuid": "^3.2.1",
 		"tslib": "^1.8.0"
   },
@@ -59,6 +60,18 @@
       "path": "./lib-esm/index.js",
       "import": "{ Amplify, Auth }",
       "limit": "73 kB"
+    },
+		{
+      "name": "Machine class",
+      "path": "./lib-esm//stateMachine/index.js",
+      "import": "{ Machine }",
+      "limit": "2 kB"
+    },
+		{
+      "name": "MachineManager class",
+      "path": "./lib-esm//stateMachine/index.js",
+      "import": "{ MachineManager }",
+      "limit": "3 kB"
     }
   ],
   "jest": {
