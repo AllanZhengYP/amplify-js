@@ -149,6 +149,9 @@
 			"dist",
 			"lib",
 			"lib-esm"
+		],
+		"browserlist": [
+			"last 2 versions"
 		]
 	}
 }

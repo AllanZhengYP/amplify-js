@@ -45,36 +45,40 @@ export class MachineState<
 		this.machineManager = props.machineManager;
 	}
 
-	accept(event: EventTypes): MachineStateEventResponse<ContextType> {
+	async accept(
+		event: EventTypes
+	): Promise<MachineStateEventResponse<ContextType>> {
 		const validTransition = this.getValidTransition(event);
-		const nextState = validTransition?.nextState ?? this.name;
 		const oldContext = this.machineContextGetter();
 		let newContext = oldContext;
+
 		// validTransition can only be the one handling current event. Cast
 		// the event to make TSC happy.
 		const castedEvent = event as Extract<
 			EventTypes,
 			{ name: EventTypes['name'] }
 		>;
+		const promiseArr = validTransition?.effects?.map(async effect => {
+			const contextFromEffect = await effect(
+				oldContext,
+				castedEvent,
+				this.machineManager
+			);
+			if (contextFromEffect && contextFromEffect !== oldContext) {
+				Object.assign(newContext, contextFromEffect);
+			}
+		});
+		// TODO: Concurrently running effects causes new events emitted in
+		// undetermined order. Should we run them in order? Or implement Promise.allSettle
+		(await Promise.all(promiseArr ?? [])) as unknown as Promise<void>;
+
 		validTransition?.reducers?.forEach(reducer => {
 			newContext = reducer(newContext, castedEvent);
 		});
 		const response: MachineStateEventResponse<ContextType> = {
-			nextState,
+			nextState: validTransition?.nextState ?? this.name,
+			newContext: newContext !== oldContext ? newContext : undefined,
 		};
-		if (newContext !== oldContext) {
-			response.newContext = newContext;
-		}
-		if ((validTransition?.effects ?? []).length > 0) {
-			const promiseArr = validTransition!.effects!.map(effect =>
-				effect(newContext, castedEvent, this.machineManager)
-			);
-			// TODO: Concurrently running effects causes new events emitted in
-			// undetermined order. Should we run them in order? Or implement Promise.allSettle
-			response.effectsPromise = Promise.all(
-				promiseArr
-			) as unknown as Promise<void>;
-		}
 		return response;
 	}
 

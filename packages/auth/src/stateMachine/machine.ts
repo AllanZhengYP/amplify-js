@@ -87,11 +87,17 @@ export class Machine<
 	 * @internal
 	 */
 	async accept(event: EventTypes) {
-		const {
-			nextState: nextStateName,
-			newContext,
-			effectsPromise,
-		} = this._current.accept(event);
+		const { nextState: nextStateName, newContext } = await this._current.accept(
+			event
+		);
+		console.log(
+			'current state',
+			this._current.name,
+			'event',
+			event,
+			'nextState',
+			nextStateName
+		);
 		const nextState = this._states[nextStateName];
 		if (!nextState) {
 			// TODO: handle invalid next state.
@@ -101,7 +107,6 @@ export class Machine<
 		if (newContext) {
 			this._context = newContext;
 		}
-		await effectsPromise;
 	}
 
 	/**

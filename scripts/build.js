@@ -205,6 +205,7 @@ function buildES6(typeScriptCompiler, watchMode) {
 		...tsconfigInfo.compilerOptions,
 		...extendsCompilerOptions,
 		module: 'es2015',
+		target: 'es2020',
 		tsBuildInfoFile: es6TsBuildInfoFilePath,
 		typeRoots,
 		outDir: pkgTscES6OutDir,

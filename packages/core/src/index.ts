@@ -69,6 +69,8 @@ export {
 	urlSafeEncode,
 } from './Util';
 
+export * from './sdks/pinpoint';
+
 /**
  * @deprecated use named import
  */

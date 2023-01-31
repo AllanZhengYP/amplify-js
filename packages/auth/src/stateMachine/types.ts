@@ -15,7 +15,7 @@ export type MachineContext = {};
  */
 export type MachineEvent = {
 	name: string;
-	payload: unknown;
+	payload?: unknown;
 	id?: string;
 	toMachine?: string;
 };
@@ -132,6 +132,7 @@ export type StateTransition<
  * @param context - The context of the Machine.
  * @param event - The event being handled.
  * @param eventBroker - The event broker handling events may emitted from effect.
+ * @return TODO
  */
 export type TransitionEffect<
 	ContextType extends MachineContext,
@@ -140,7 +141,7 @@ export type TransitionEffect<
 	context: ContextType,
 	event: EventType,
 	eventBroker: EventBroker<MachineEvent>
-) => Promise<void>;
+) => Promise<Partial<ContextType> | void>;
 
 /**
  * Type for a TransitionGuard, which can prevent the enclosing Transition from completing
@@ -204,7 +205,6 @@ export type CurrentStateAndContext<
 export interface MachineStateEventResponse<ContextType extends MachineContext> {
 	nextState: string;
 	newContext?: ContextType;
-	effectsPromise?: Promise<unknown>;
 }
 
 /**
@@ -217,5 +217,5 @@ export interface MachineState<
 	EventType extends MachineEvent
 > {
 	name: string;
-	accept: (event: EventType) => MachineStateEventResponse<ContextType>;
+	accept: (event: EventType) => Promise<MachineStateEventResponse<ContextType>>;
 }
