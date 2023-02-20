@@ -17,8 +17,8 @@ export const put = async (
 	config?: S3ProviderPutConfig,
 	sdkClientCreator?: (key: string, options: any) => Promise<any> // S3 client escape hatch
 ): Promise<any> => {
-	const s3GlobalConfig = getStorageConfig();
-
+	// const s3GlobalConfig = getStorageConfig();
+	const s3GlobalConfig = {} as any;
 	// Build request options & S3 command
 	const options = Object.assign({}, s3GlobalConfig, config);
 	const {

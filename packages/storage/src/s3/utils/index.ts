@@ -27,8 +27,10 @@ export const createSDKClient = async (
 };
 
 export const getStorageConfig = () => {
-	const amplifyConfig = parseAWSExports(Amplify.getConfig()) as any;
-	const s3GlobalConfig = amplifyConfig?.Storage.AWSS3;
+	// const amplifyConfig = parseAWSExports(Amplify.getConfig()) as any;
+	const amplifyConfig = {};
+	//@ts-ignore
+	const s3GlobalConfig = amplifyConfig?.Storage?.AWSS3;
 
 	if (!s3GlobalConfig) {
 		throw Error('S3 has not been configured.');

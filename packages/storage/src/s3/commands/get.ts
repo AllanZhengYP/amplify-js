@@ -6,9 +6,9 @@ import {
 } from '@aws-sdk/client-s3';
 import { S3RequestPresigner } from '@aws-sdk/s3-request-presigner';
 import { getSignedParams } from '@aws-amplify/core';
-import { getPrefix } from '../../common/S3ClientUtils';
+// import { getPrefix } from '../../common/S3ClientUtils';
 import { S3ProviderGetConfig } from '../../types';
-import { getStorageConfig } from '../utils';
+// import { getStorageConfig } from '../utils';
 import { generatePresignedUrl } from '../client';
 
 const DEFAULT_PRESIGN_EXPIRATION = 900;
@@ -19,7 +19,8 @@ export const get = async (
 	config?: S3ProviderGetConfig,
 	sdkClientCreator?: (key: string, options: any) => Promise<S3Client> // S3 client escape hatch
 ): Promise<string | GetObjectCommandOutput | Response> => {
-	const s3GlobalConfig = getStorageConfig();
+	// const s3GlobalConfig = getStorageConfig();
+	const s3GlobalConfig = {} as any;
 	const options = Object.assign({}, s3GlobalConfig, config);
 	const {
 		bucket,
@@ -36,8 +37,8 @@ export const get = async (
 		SSECustomerKeyMD5,
 		progressCallback,
 	} = options;
-	const prefix = getPrefix({ ...options, credentials: awsCreds }); // TODO Standardize prefix generation across APIs
-	const final_key = prefix + key;
+	// const prefix = getPrefix({ ...options, credentials: awsCreds }); // TODO Standardize prefix generation across APIs
+	const final_key = 'public' + key;
 	const path = `https://${options.bucket}.s3.${options.region}.amazonaws.com/${final_key}`;
 
 	// Build request & S3 command
@@ -55,8 +56,8 @@ export const get = async (
 	};
 
 	// Initialize client
-	const sdkClient = sdkClientCreator && (await sdkClientCreator(key, options));
-
+	// const sdkClient = sdkClientCreator && (await sdkClientCreator(key, options));
+	const sdkClient = null;
 	if (sdkClient) {
 		// Check if we should download immediately
 		if (download) {
@@ -70,20 +71,20 @@ export const get = async (
 
 			//return response as GetObjectCommandOutput;
 		} else {
-			// If not downloading, generate a pre-signed URL
-			const s3ClientConfig = sdkClient.config;
-			const signer = s3ClientConfig && new S3RequestPresigner(s3ClientConfig);
-			/*const request = await createRequest(
-				sdkClient,
-				new GetObjectCommand(params)
-			);
-			const url = formatUrl(
-				await signer.presign(request, {
-					expiresIn: expires || DEFAULT_PRESIGN_EXPIRATION,
-				})
-			);
-
-			return url;*/
+			// // If not downloading, generate a pre-signed URL
+			// // @ts-ignore
+			// const s3ClientConfig = sdkClient?.config;
+			// const signer = s3ClientConfig && new S3RequestPresigner(s3ClientConfig);
+			// /*const request = await createRequest(
+			// 	sdkClient,
+			// 	new GetObjectCommand(params)
+			// );
+			// const url = formatUrl(
+			// 	await signer.presign(request, {
+			// 		expiresIn: expires || DEFAULT_PRESIGN_EXPIRATION,
+			// 	})
+			// );
+			// return url;*/
 		}
 	} else {
 		if (download) {
@@ -116,17 +117,16 @@ export const get = async (
 				headers,
 			});
 
-			return response;
+			// return response;
 		} else {
-			// Generate a pre-signed URL
-			const presignedUrl = await generatePresignedUrl(
-				path,
-				options.region,
-				awsCreds,
-				'GET'
-			);
-
-			return presignedUrl;
+			// // Generate a pre-signed URL
+			// const presignedUrl = await generatePresignedUrl(
+			// 	path,
+			// 	options.region,
+			// 	awsCreds,
+			// 	'GET'
+			// );
+			// return presignedUrl;
 		}
 	}
 
