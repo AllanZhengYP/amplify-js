@@ -1,6 +1,6 @@
 import { ConsoleLogger as Logger } from './Logger';
 import { StorageHelper } from './StorageHelper';
-import { makeQuerablePromise } from './JS';
+import { makeQuerablePromise, QuerablePromise } from './JS';
 import { FacebookOAuth, GoogleOAuth } from './OAuthHelper';
 import { jitteredExponentialRetry } from './Util';
 import { ICredentials } from './types';
@@ -12,6 +12,8 @@ import {
 } from './clients/cognito-identity';
 import { parseAWSExports } from './parseAWSExports';
 import { Hub } from './Hub';
+
+type CredentialsResponse = Omit<ICredentials, 'authenticated' | 'identityId'>;
 
 const logger = new Logger('Credentials');
 
@@ -37,15 +39,15 @@ export class CredentialsClass {
 	private _config;
 	private _credentials;
 	private _credentials_source;
-	private _gettingCredPromise = null;
+	private _gettingCredPromise: QuerablePromise<ICredentials> | null = null;
 	private _refreshHandlers = {};
 	private _storage;
 	private _storageSync;
 	private _identityId;
-	private _nextCredentialsRefresh: Number;
+	private _nextCredentialsRefresh: Number | null = null;
 
 	// Allow `Auth` to be injected for SSR, but Auth isn't a required dependency for Credentials
-	Auth = undefined;
+	Auth: any = undefined;
 
 	constructor(config) {
 		this.configure(config);
@@ -107,7 +109,7 @@ export class CredentialsClass {
 
 	private _pickupCredentials() {
 		logger.debug('picking up credentials');
-		if (!this._gettingCredPromise || !this._gettingCredPromise.isPending()) {
+		if (!this._gettingCredPromise || !this._gettingCredPromise.isPending?.()) {
 			logger.debug('getting new cred promise');
 			this._gettingCredPromise = makeQuerablePromise(this._keepAlive());
 		} else {
@@ -243,7 +245,10 @@ export class CredentialsClass {
 	}
 
 	private _isPastTTL(): boolean {
-		return this._nextCredentialsRefresh <= Date.now();
+		return (
+			this._nextCredentialsRefresh !== null &&
+			this._nextCredentialsRefresh <= Date.now()
+		);
 	}
 
 	private async _setCredentialsForGuest() {
@@ -285,7 +290,7 @@ export class CredentialsClass {
 
 		const identityId = (this._identityId = await this._getGuestIdentityId());
 
-		let credentials = undefined;
+		let credentials: CredentialsResponse | undefined = undefined;
 		if (!identityId) {
 			const { IdentityId } = await getId(cognitoIdentityServiceContext, {
 				IdentityPoolId: identityPoolId,
@@ -299,10 +304,10 @@ export class CredentialsClass {
 			}
 		);
 		credentials = {
-			accessKeyId: Credentials!.AccessKeyId,
-			secretAccessKey: Credentials!.SecretKey,
-			sessionToken: Credentials!.SessionToken,
-			expiration: Credentials!.Expiration,
+			accessKeyId: Credentials!.AccessKeyId!,
+			secretAccessKey: Credentials!.SecretKey!,
+			sessionToken: Credentials!.SessionToken!,
+			expiration: Credentials!.Expiration!,
 		};
 
 		return this._loadCredentials(credentials, 'guest', false, null)
@@ -330,9 +335,9 @@ export class CredentialsClass {
 						}
 					);
 					credentials = {
-						accessKeyId: Credentials!.AccessKeyId,
-						secretAccessKey: Credentials!.SecretKey,
-						sessionToken: Credentials!.SessionToken,
+						accessKeyId: Credentials!.AccessKeyId!,
+						secretAccessKey: Credentials!.SecretKey!,
+						sessionToken: Credentials!.SessionToken!,
 						expiration: Credentials!.Expiration,
 					};
 
@@ -374,8 +379,8 @@ export class CredentialsClass {
 		}
 		const cognitoIdentityServiceContext = getContext({ region });
 
-		let credentials = undefined;
-		let identityId = undefined;
+		let credentials: CredentialsResponse | undefined = undefined;
+		let identityId: string | undefined = undefined;
 		if (!identity_id) {
 			const { IdentityId } = await getId(cognitoIdentityServiceContext, {
 				Logins: logins,
@@ -391,9 +396,9 @@ export class CredentialsClass {
 			}
 		);
 		credentials = {
-			accessKeyId: Credentials!.AccessKeyId,
-			secretAccessKey: Credentials!.SecretKey,
-			sessionToken: Credentials!.SessionToken,
+			accessKeyId: Credentials!.AccessKeyId!,
+			secretAccessKey: Credentials!.SecretKey!,
+			sessionToken: Credentials!.SessionToken!,
 			expiration: Credentials!.Expiration,
 		};
 		return this._loadCredentials(credentials, 'federated', true, params);
@@ -432,13 +437,12 @@ export class CredentialsClass {
 			generatedOrRetrievedIdentityId = IdentityId;
 		}
 
-		const {
-			Credentials: { AccessKeyId, Expiration, SecretKey, SessionToken },
-			IdentityId: primaryIdentityId,
-		} = await getCredentialsForIdentity(cognitoIdentityServiceContext, {
-			Logins: logins,
-			IdentityId: guestIdentityId || generatedOrRetrievedIdentityId,
-		});
+		const { Credentials = {}, IdentityId: primaryIdentityId } =
+			await getCredentialsForIdentity(cognitoIdentityServiceContext, {
+				Logins: logins,
+				IdentityId: guestIdentityId || generatedOrRetrievedIdentityId,
+			});
+		const { AccessKeyId, Expiration, SecretKey, SessionToken } = Credentials;
 
 		this._identityId = primaryIdentityId;
 		if (guestIdentityId) {
@@ -538,13 +542,13 @@ export class CredentialsClass {
 	}
 
 	/* operations on local stored guest identity */
-	private async _getGuestIdentityId(): Promise<string> {
+	private async _getGuestIdentityId(): Promise<string | undefined> {
 		const { identityPoolId } = this._config;
 		try {
 			await this._storageSync;
 			return this._storage.getItem(
 				this._getCognitoIdentityIdStorageKey(identityPoolId)
-			);
+			) as string;
 		} catch (e) {
 			logger.debug('Failed to get the cached guest identityId', e);
 		}

@@ -84,7 +84,7 @@ export async function retry<T>(
 		}
 
 		// reached if terminated while waiting for a timer.
-		reject(lastError);
+		reject(lastError!);
 	});
 }
 

@@ -4,11 +4,11 @@ const logger = new LoggerClass('Amplify');
 
 export class AmplifyClass {
 	// Everything that is `register`ed is tracked here
-	private _components = [];
+	private _components: any[] = [];
 	private _config = {};
 
 	// All modules (with `getModuleName()`) are stored here for dependency injection
-	private _modules = {};
+	private _modules: Record<string, any> = {};
 
 	// for backward compatibility to avoid breaking change
 	// if someone is using like Amplify.Auth

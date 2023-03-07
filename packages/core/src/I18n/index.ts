@@ -5,11 +5,12 @@ import { I18n as I18nClass } from './I18n';
 
 import { ConsoleLogger as Logger } from '../Logger';
 import { Amplify } from '../Amplify';
+import { I18nOptions } from './types';
 
 const logger = new Logger('I18n');
 
-let _config = null;
-let _i18n = null;
+let _config: I18nOptions | null = null;
+let _i18n: I18nClass | null = null;
 
 /**
  * Export I18n APIs
@@ -59,7 +60,7 @@ export class I18n {
 	static setLanguage(lang) {
 		I18n.checkConfig();
 
-		return _i18n.setLanguage(lang);
+		return _i18n!.setLanguage(lang);
 	}
 
 	/**
@@ -73,7 +74,7 @@ export class I18n {
 			return typeof defVal === 'undefined' ? key : defVal;
 		}
 
-		return _i18n.get(key, defVal);
+		return _i18n!.get(key, defVal);
 	}
 
 	/**
@@ -86,7 +87,7 @@ export class I18n {
 	static putVocabulariesForLanguage(language, vocabularies) {
 		I18n.checkConfig();
 
-		return _i18n.putVocabulariesForLanguage(language, vocabularies);
+		return _i18n!.putVocabulariesForLanguage(language, vocabularies);
 	}
 
 	/**
@@ -99,7 +100,7 @@ export class I18n {
 	static putVocabularies(vocabularies) {
 		I18n.checkConfig();
 
-		return _i18n.putVocabularies(vocabularies);
+		return _i18n!.putVocabularies(vocabularies);
 	}
 
 	public static checkConfig() {

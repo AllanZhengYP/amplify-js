@@ -30,7 +30,7 @@ export class ConsoleLogger implements Logger {
 	name: string;
 	level: LOG_TYPE | string;
 	private _pluggables: LoggingProvider[];
-	private _config: object;
+	private _config?: object;
 
 	/**
 	 * @constructor

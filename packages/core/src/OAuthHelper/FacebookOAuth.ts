@@ -6,7 +6,7 @@ import { NonRetryableError } from '../Util';
 
 const logger = new Logger('CognitoCredentials');
 
-const waitForInit = new Promise((res, rej) => {
+const waitForInit = new Promise<void>((res, rej) => {
 	if (!browserOrNode().isBrowser) {
 		logger.debug('not in the browser, directly resolved');
 		return res();
@@ -42,7 +42,7 @@ export class FacebookOAuth {
 	}
 
 	private _refreshFacebookTokenImpl() {
-		let fb = null;
+		let fb: any = null;
 		if (browserOrNode().isBrowser) fb = window['FB'];
 		if (!fb) {
 			const errorMessage = 'no fb sdk available';

@@ -13,12 +13,12 @@ export class I18n {
 	/**
 	 * @private
 	 */
-	_options: I18nOptions = null;
+	_options: I18nOptions | null = null;
 
 	/**
 	 * @private
 	 */
-	_lang = null;
+	_lang: string | null = null;
 
 	/**
 	 * @private
@@ -30,7 +30,7 @@ export class I18n {
 	 * Initialize with configurations
 	 * @param {Object} options
 	 */
-	constructor(options: I18nOptions) {
+	constructor(options: I18nOptions | null) {
 		this._options = Object.assign({}, options);
 		this._lang = this._options.language;
 

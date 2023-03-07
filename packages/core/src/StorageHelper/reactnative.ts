@@ -7,7 +7,7 @@ let dataMemory = {};
 
 /** @class */
 class MemoryStorage {
-	static syncPromise = null;
+	static syncPromise: Promise<void> | null = null;
 	/**
 	 * This is used to set a specific item in storage
 	 * @param {string} key - the key for the item
@@ -62,11 +62,13 @@ class MemoryStorage {
 			MemoryStorage.syncPromise = new Promise((res, rej) => {
 				AsyncStorage.getAllKeys((errKeys, keys) => {
 					if (errKeys) rej(errKeys);
+					// @ts-ignore - TODO: after PoC
 					const memoryKeys = keys.filter(key =>
 						key.startsWith(MEMORY_KEY_PREFIX)
 					);
 					AsyncStorage.multiGet(memoryKeys, (err, stores) => {
 						if (err) rej(err);
+						// @ts-ignore - TODO: after PoC
 						stores.map((result, index, store) => {
 							const key = store[index][0];
 							const value = store[index][1];

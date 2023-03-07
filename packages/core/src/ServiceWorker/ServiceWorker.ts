@@ -27,17 +27,17 @@ import { Amplify } from '../Amplify';
  */
 export class ServiceWorkerClass {
 	// The active service worker will be set once it is registered
-	private _serviceWorker: ServiceWorker;
+	private _serviceWorker?: ServiceWorker;
 
 	// The service worker registration object
-	private _registration: ServiceWorkerRegistration;
+	private _registration?: ServiceWorkerRegistration;
 
 	// The application server public key for Push
 	// https://web-push-codelab.glitch.me/
-	private _publicKey: string;
+	private _publicKey?: string;
 
 	// push subscription
-	private _subscription: PushSubscription;
+	private _subscription?: PushSubscription;
 
 	// The AWS Amplify logger
 	private _logger: Logger = new Logger('ServiceWorker');
@@ -48,7 +48,7 @@ export class ServiceWorkerClass {
 	 * Get the currently active service worker
 	 */
 	get serviceWorker(): ServiceWorker {
-		return this._serviceWorker;
+		return this._serviceWorker!;
 	}
 
 	/**
@@ -113,7 +113,7 @@ export class ServiceWorkerClass {
 		this._publicKey = publicKey;
 		return new Promise((resolve, reject) => {
 			if (browserOrNode().isBrowser) {
-				this._registration.pushManager.getSubscription().then(subscription => {
+				this._registration!.pushManager.getSubscription().then(subscription => {
 					if (subscription) {
 						this._subscription = subscription;
 						this._logger.debug(
@@ -122,11 +122,10 @@ export class ServiceWorkerClass {
 						resolve(subscription);
 					} else {
 						this._logger.debug(`User is NOT subscribed to push`);
-						return this._registration.pushManager
-							.subscribe({
-								userVisibleOnly: true,
-								applicationServerKey: this._urlB64ToUint8Array(publicKey),
-							})
+						return this._registration!.pushManager.subscribe({
+							userVisibleOnly: true,
+							applicationServerKey: this._urlB64ToUint8Array(publicKey),
+						})
 							.then(subscription => {
 								this._subscription = subscription;
 								this._logger.debug(
@@ -185,10 +184,12 @@ export class ServiceWorkerClass {
 	 * https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorker/state
 	 **/
 	_setupListeners() {
-		this._serviceWorker.addEventListener('statechange', event => {
-			const currentState = this._serviceWorker.state;
+		this._serviceWorker!.addEventListener('statechange', event => {
+			const currentState = this._serviceWorker!.state;
 			this._logger.debug(`ServiceWorker statechange: ${currentState}`);
+			// @ts-ignore - Analytics is registered if the package is installed
 			if (Amplify.Analytics && typeof Amplify.Analytics.record === 'function') {
+				// @ts-ignore - Analytics is registered if the package is installed
 				Amplify.Analytics.record({
 					name: 'ServiceWorker',
 					attributes: {
@@ -197,7 +198,7 @@ export class ServiceWorkerClass {
 				});
 			}
 		});
-		this._serviceWorker.addEventListener('message', event => {
+		this._serviceWorker!.addEventListener('message', event => {
 			this._logger.debug(`ServiceWorker message event: ${event}`);
 		});
 	}

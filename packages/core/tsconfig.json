@@ -1,0 +1,16 @@
+{
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"lib": ["DOM", "DOM.Iterable", "ES2020.Promise"],
+		"module": "ESNext",
+		"moduleResolution": "node",
+		"declaration": true,
+		"outDir": "./lib-esm/clients",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"useUnknownInCatchVariables": false,
+		"skipLibCheck": true
+	},
+	"include": ["lib*/**/*.ts", "src"]
+}

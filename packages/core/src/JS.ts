@@ -53,7 +53,7 @@ export const sortByField = (list, field, dir) => {
 	}
 
 	const dirX = dir && dir === 'desc' ? -1 : 1;
-	list.sort(function(a, b) {
+	list.sort(function (a, b) {
 		const a_val = a[field];
 		const b_val = b[field];
 
@@ -125,14 +125,23 @@ export const generateRandomString = () => {
 	return result;
 };
 
-export const makeQuerablePromise = promise => {
+export type QuerablePromise<T> = Promise<T> & {
+	isPending?: () => boolean;
+	isRejected?: () => boolean;
+	isFullfilled?: () => boolean;
+	isResolved?: boolean;
+};
+
+export const makeQuerablePromise = <T>(
+	promise: QuerablePromise<T>
+): QuerablePromise<T> => {
 	if (promise.isResolved) return promise;
 
 	let isPending = true;
 	let isRejected = false;
 	let isFullfilled = false;
 
-	const result = promise.then(
+	const result: QuerablePromise<T> = promise.then(
 		data => {
 			isFullfilled = true;
 			isPending = false;
@@ -185,8 +194,8 @@ export const browserOrNode = () => {
  */
 export const transferKeyToLowerCase = (
 	obj,
-	whiteListForItself = [],
-	whiteListForChildren = []
+	whiteListForItself: string[] = [],
+	whiteListForChildren: string[] = []
 ) => {
 	if (!isStrictObject(obj)) return obj;
 	const ret = {};
@@ -218,8 +227,8 @@ export const transferKeyToLowerCase = (
  */
 export const transferKeyToUpperCase = (
 	obj,
-	whiteListForItself = [],
-	whiteListForChildren = []
+	whiteListForItself: string[] = [],
+	whiteListForChildren: string[] = []
 ) => {
 	if (!isStrictObject(obj)) return obj;
 	const ret = {};
