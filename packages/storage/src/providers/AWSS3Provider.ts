@@ -25,10 +25,15 @@ import {
 import { formatUrl } from '@aws-sdk/util-format-url';
 import { createRequest } from '@aws-sdk/util-create-request';
 import { S3RequestPresigner } from '@aws-sdk/s3-request-presigner';
+// import {
+// 	SEND_DOWNLOAD_PROGRESS_EVENT,
+// 	SEND_UPLOAD_PROGRESS_EVENT,
+// } from './axios-http-handler';
+import { getObject } from '../AwsClients/S3/getObject';
 import {
 	SEND_DOWNLOAD_PROGRESS_EVENT,
 	SEND_UPLOAD_PROGRESS_EVENT,
-} from './axios-http-handler';
+} from '../AwsClients/S3/utils';
 import {
 	StorageOptions,
 	StorageProvider,
@@ -382,7 +387,7 @@ export class AWSS3Provider implements StorageProvider {
 		const prefix = this._prefix(opt);
 		const final_key = prefix + key;
 		const emitter = new events.EventEmitter();
-		const s3 = this._createNewS3Client(opt, emitter);
+		// const s3 = this._createNewS3Client(opt, emitter);
 		logger.debug('get ' + key + ' from ' + final_key);
 
 		const params: GetObjectCommandInput = {
@@ -407,7 +412,7 @@ export class AWSS3Provider implements StorageProvider {
 		}
 
 		if (download === true) {
-			const getObjectCommand = new GetObjectCommand(params);
+			// const getObjectCommand = new GetObjectCommand(params);
 			try {
 				if (progressCallback) {
 					if (typeof progressCallback === 'function') {
@@ -421,7 +426,15 @@ export class AWSS3Provider implements StorageProvider {
 						);
 					}
 				}
-				const response = await s3.send(getObjectCommand);
+				const response = await getObject(
+					{
+						// TODO: cred; region; accelerate endpoint
+					},
+					{
+						...params,
+					}
+				);
+				// const response = await s3.send(getObjectCommand);
 				emitter.removeAllListeners(SEND_DOWNLOAD_PROGRESS_EVENT);
 				dispatchStorageEvent(
 					track,

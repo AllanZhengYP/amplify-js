@@ -5,10 +5,9 @@ import {
 } from '@aws-amplify/core/lib-esm/clients/types';
 import type * as events from 'events';
 import { ConsoleLogger as Logger } from '@aws-amplify/core';
-import {
-	SEND_DOWNLOAD_PROGRESS_EVENT,
-	SEND_UPLOAD_PROGRESS_EVENT,
-} from '../../providers/axios-http-handler';
+
+export const SEND_UPLOAD_PROGRESS_EVENT = 'sendUploadProgress';
+export const SEND_DOWNLOAD_PROGRESS_EVENT = 'sendDownloadProgress';
 
 const NETWORK_ERROR_MESSAGE = 'Network Error';
 const NETWORK_ERROR_CODE = 'ECONNABORTED';
@@ -33,7 +32,7 @@ export interface XhrTransferHandlerOptions {
 }
 
 /**
- * Transfer handler implementation using XMLHttpRequest to support upload and download progress events.
+ * Base transfer handler implementation using XMLHttpRequest to support upload and download progress events.
  *
  * @param request - The request object.
  * @param options - The request options.

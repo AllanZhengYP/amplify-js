@@ -159,7 +159,7 @@ export const createS3Client = (
 		credentials: credentialsProvider,
 		customUserAgent: getAmplifyUserAgent(),
 		...localTestingConfig,
-		requestHandler: new AxiosHttpHandler({}, emitter, cancelTokenSource),
+		// requestHandler: new AxiosHttpHandler({}, emitter, cancelTokenSource),
 		useAccelerateEndpoint,
 	});
 	s3client.middlewareStack.remove(SET_CONTENT_LENGTH_HEADER);

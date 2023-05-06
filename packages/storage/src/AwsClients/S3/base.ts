@@ -14,19 +14,19 @@ import { parseXmlError } from './utils';
  */
 const SERVICE_NAME = 's3';
 
-type InputParametersForEndpoint = {
-	Bucket: string;
-	Key: string;
+type S3EndpointResolverOptions = EndpointResolverOptions & {
+	useAccelerateEndpoint?: boolean;
 };
 
 /**
  * The endpoint resolver function that returns the endpoint URL for a given region, and input parameters.
  */
-const endpointResolver = (
-	{ region }: EndpointResolverOptions,
-	{ Bucket: bucket, Key: key }: InputParametersForEndpoint
-) => ({
-	url: new URL(`https://${bucket}.s3.${region}.${getDnsSuffix(region)}/${key}`),
+const endpointResolver = ({
+	region,
+	useAccelerateEndpoint,
+}: S3EndpointResolverOptions) => ({
+	// TODO: use accelerate endpoints
+	url: new URL(`https://s3.${region}.${getDnsSuffix(region)}`),
 });
 
 /**
@@ -43,6 +43,18 @@ export const defaultConfig = {
 /**
  * @internal
  */
-export const getSharedHeaders = (): Headers => ({
-	'content-type': 'application/json',
-});
+export const serializeHeaders = (
+	values: Record<string, string | undefined | null>
+): Record<string, string> => {
+	const isSerializable = (value: any): value is string =>
+		value !== undefined &&
+		value !== null &&
+		value !== '' &&
+		(!Object.getOwnPropertyNames(value).includes('length') ||
+			value.length !== 0) &&
+		(!Object.getOwnPropertyNames(value).includes('size') || value.size !== 0);
+	const headerEntries = Object.entries(values).filter(([, value]) =>
+		isSerializable(value)
+	) as [string, string][];
+	return Object.fromEntries(headerEntries);
+};
