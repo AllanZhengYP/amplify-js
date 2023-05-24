@@ -1,10 +1,10 @@
 import {
 	ErrorParser,
 	HttpResponse,
-} from '@aws-amplify/core/lib-esm/clients/types';
+	parseMetadata,
+} from '@aws-amplify/core/internals/aws-client-utils';
 
 import { parser } from './xmlParser.browser';
-import { parseMetadata } from '@aws-amplify/core/lib-esm/clients/serde';
 
 export const parseXmlError: ErrorParser = async (response?: HttpResponse) => {
 	if (!response || response.statusCode < 300) {

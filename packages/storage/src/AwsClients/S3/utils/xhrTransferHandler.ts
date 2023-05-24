@@ -2,7 +2,7 @@ import {
 	HttpRequest,
 	HttpResponse,
 	TransferHandler,
-} from '@aws-amplify/core/lib-esm/clients/types';
+} from '@aws-amplify/core/internals/aws-client-utils';
 import type * as events from 'events';
 import { ConsoleLogger as Logger } from '@aws-amplify/core';
 
@@ -152,7 +152,10 @@ export const xhrTransferHandler: TransferHandler<
 				: abortSignal.addEventListener('abort', onCancelled);
 		}
 
-		if (ReadableStream && body instanceof ReadableStream) {
+		if (
+			typeof ReadableStream === 'function' &&
+			body instanceof ReadableStream
+		) {
 			throw new Error('ReadableStream request payload is not supported.');
 		}
 

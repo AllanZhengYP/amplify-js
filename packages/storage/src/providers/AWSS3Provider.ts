@@ -387,7 +387,7 @@ export class AWSS3Provider implements StorageProvider {
 		const prefix = this._prefix(opt);
 		const final_key = prefix + key;
 		const emitter = new events.EventEmitter();
-		// const s3 = this._createNewS3Client(opt, emitter);
+		const s3 = this._createNewS3Client(opt, emitter);
 		logger.debug('get ' + key + ' from ' + final_key);
 
 		const params: GetObjectCommandInput = {

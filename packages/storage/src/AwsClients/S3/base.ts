@@ -1,8 +1,9 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { getDnsSuffix } from '@aws-amplify/core/lib-esm/clients/endpoints';
+import { getAmplifyUserAgent } from '@aws-amplify/core';
 import {
+	getDnsSuffix,
 	jitteredBackoff,
 	getRetryDecider,
 	EndpointResolverOptions,

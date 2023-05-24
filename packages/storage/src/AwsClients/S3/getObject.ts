@@ -2,9 +2,9 @@ import {
 	Endpoint,
 	HttpRequest,
 	HttpResponse,
-} from '@aws-amplify/core/lib-esm/clients/types';
-import { parseMetadata } from '@aws-amplify/core/lib-esm/clients/serde';
-import { composeServiceApi } from '@aws-amplify/core/lib-esm/clients/internal/composeServiceApi';
+	parseMetadata,
+	composeServiceApi,
+} from '@aws-amplify/core/internals/aws-client-utils';
 import type {
 	GetObjectCommandInput,
 	GetObjectCommandOutput,
@@ -43,7 +43,7 @@ const getObjectSerializer = (
 		'x-id': 'GetObject',
 		// TODO: add other query params
 	};
-	const url = new URL(endpoint.url);
+	const url = new URL(endpoint.url.toString());
 	url.hostname = `${input.Bucket}.${url.hostname}`;
 	url.pathname = `/${input.Key}`;
 	url.search = new URLSearchParams(query).toString();
@@ -63,7 +63,7 @@ const getObjectDeserializer = async (
 	} else {
 		return {
 			$metadata: parseMetadata(response),
-			Body: await response.body.blob(),
+			Body: await response?.body?.blob(),
 			// TODO: add all other s3 object fields
 		};
 	}

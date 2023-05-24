@@ -11,5 +11,6 @@ export {
 	signRequest,
 	presignUrl,
 } from './middleware/signing/signer/signatureV4';
+export { getRetryDecider, jitteredBackoff } from './middleware/retry';
 export { parseJsonBody, parseJsonError, parseMetadata } from './serde';
 export * from './types';
