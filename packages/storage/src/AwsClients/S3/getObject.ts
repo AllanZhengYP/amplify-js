@@ -10,7 +10,7 @@ import type {
 	GetObjectCommandOutput,
 } from '@aws-sdk/client-s3';
 
-import { serializeHeaders, defaultConfig } from './base';
+import { assignSerializableValues, defaultConfig } from './base';
 import { parseXmlError, s3TransferHandler } from './utils';
 
 export type GetObjectInput = Pick<
@@ -33,7 +33,7 @@ const getObjectSerializer = (
 	input: GetObjectInput,
 	endpoint: Endpoint
 ): HttpRequest => {
-	const headers = serializeHeaders({
+	const headers = assignSerializableValues({
 		'x-amz-server-side-encryption-customer-algorithm':
 			input.SSECustomerAlgorithm,
 		'x-amz-server-side-encryption-customer-key': input.SSECustomerKey,

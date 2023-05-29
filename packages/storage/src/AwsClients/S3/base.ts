@@ -44,8 +44,8 @@ export const defaultConfig = {
 /**
  * @internal
  */
-export const serializeHeaders = (
-	values: Record<string, string | undefined | null>
+export const assignSerializableValues = (
+	values: Record<string, any>
 ): Record<string, string> => {
 	const isSerializable = (value: any): value is string =>
 		value !== undefined &&
