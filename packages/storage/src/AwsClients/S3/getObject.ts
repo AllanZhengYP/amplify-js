@@ -3,8 +3,8 @@ import {
 	HttpRequest,
 	HttpResponse,
 	parseMetadata,
-	composeServiceApi,
 } from '@aws-amplify/core/internals/aws-client-utils';
+import { composeServiceApi } from '@aws-amplify/core/internals/aws-client-utils/composers';
 import type {
 	GetObjectCommandInput,
 	GetObjectCommandOutput,

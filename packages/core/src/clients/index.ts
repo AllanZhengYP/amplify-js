@@ -6,8 +6,6 @@ export { getDnsSuffix } from './endpoints';
 export { fetchTransferHandler } from './handlers/fetch';
 export { unauthenticatedHandler } from './handlers/unauthenticated';
 export { authenticatedHandler } from './handlers/authenticated';
-export { composeServiceApi } from './internal/composeServiceApi';
-export { composeTransferHandler } from './internal/composeTransferHandler';
 export {
 	signRequest,
 	presignUrl,

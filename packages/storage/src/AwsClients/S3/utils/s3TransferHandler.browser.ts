@@ -8,10 +8,10 @@ import {
 	SigningOptions,
 	userAgentMiddleware,
 	UserAgentOptions,
-	composeTransferHandler,
 	HttpRequest,
 	HttpResponse,
 } from '@aws-amplify/core/internals/aws-client-utils';
+import { composeTransferHandler } from '@aws-amplify/core/internals/aws-client-utils/composers';
 
 import { xhrTransferHandler } from './xhrTransferHandler';
 
