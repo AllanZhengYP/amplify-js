@@ -429,6 +429,8 @@ export class AWSS3Provider implements StorageProvider {
 				const response = await getObject(
 					{
 						// TODO: cred; region; accelerate endpoint
+						region: opt.region, // placeholder
+						credentials: opt.credentials, // placeholder
 					},
 					{
 						...params,
