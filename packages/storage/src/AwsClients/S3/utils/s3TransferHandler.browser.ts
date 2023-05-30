@@ -13,6 +13,7 @@ import {
 } from '@aws-amplify/core/internals/aws-client-utils';
 import { composeTransferHandler } from '@aws-amplify/core/internals/aws-client-utils/composers';
 
+import { contentSha256Middleware } from './contentSha256middleware';
 import { xhrTransferHandler } from './xhrTransferHandler';
 
 /**
@@ -22,10 +23,11 @@ import { xhrTransferHandler } from './xhrTransferHandler';
  * @internal
  */
 export const s3TransferHandler = composeTransferHandler<
-	[UserAgentOptions, RetryOptions<HttpResponse>, SigningOptions],
+	[{}, UserAgentOptions, RetryOptions<HttpResponse>, SigningOptions],
 	HttpRequest,
 	HttpResponse
 >(xhrTransferHandler, [
+	contentSha256Middleware,
 	userAgentMiddleware,
 	retryMiddleware,
 	signingMiddleware,

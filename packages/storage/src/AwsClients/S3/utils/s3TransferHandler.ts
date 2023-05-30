@@ -1,8 +1,14 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { fetchTransferHandler } from '@aws-amplify/core/internals/aws-client-utils';
+import {
+	HttpRequest,
+	HttpResponse,
+	authenticatedHandler,
+} from '@aws-amplify/core/internals/aws-client-utils';
 import type { s3TransferHandler as s3BrowserTransferhandler } from './s3TransferHandler.browser';
+import { composeTransferHandler } from '@aws-amplify/core/internals/aws-client-utils/composers';
+import { contentSha256Middleware } from './contentSha256middleware';
 
 /**
  * S3 transfer handler for node based on Node-fetch. On top of basic transfer handler, it also supports
@@ -10,5 +16,8 @@ import type { s3TransferHandler as s3BrowserTransferhandler } from './s3Transfer
  *
  * @internal
  */
-export const s3TransferHandler =
-	fetchTransferHandler as typeof s3BrowserTransferhandler;
+export const s3TransferHandler: typeof s3BrowserTransferhandler =
+	composeTransferHandler<[{}], HttpRequest, HttpResponse>(
+		authenticatedHandler,
+		[contentSha256Middleware]
+	);
