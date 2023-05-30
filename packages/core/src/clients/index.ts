@@ -11,6 +11,7 @@ export {
 	presignUrl,
 } from './middleware/signing/signer/signatureV4';
 export { signingMiddleware, SigningOptions } from './middleware/signing';
+export { getHashedPayload } from './middleware/signing/signer/signatureV4';
 export {
 	getRetryDecider,
 	jitteredBackoff,
