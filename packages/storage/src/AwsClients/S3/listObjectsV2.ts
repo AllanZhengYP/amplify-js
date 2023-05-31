@@ -12,6 +12,13 @@ import type {
 
 import { assignSerializableValues, defaultConfig } from './base';
 import { parser as xmlParser, parseXmlError, s3TransferHandler } from './utils';
+import {
+	emptyArrayGuard,
+	map,
+	deserializeNumber,
+	deserializeBoolean,
+	deserializeTimestamp,
+} from './utils/deserializeHelpers';
 
 export type ListObjectsV2Input = ListObjectsV2CommandInput;
 
@@ -57,13 +64,62 @@ const listObjectsV2Deserializer = async (
 	} else {
 		const data = await response?.body?.text();
 		const parsed = await xmlParser.parse(data ?? '');
-		// TODO: convert boolean, number, and timestamp strings to their respective types
+		const contents = map(parsed, {
+			CommonPrefixes: [
+				'CommonPrefixes',
+				value => emptyArrayGuard(value, deserializeCommonPrefixList),
+			],
+			Contents: [
+				'Contents',
+				value => emptyArrayGuard(value, deserializeObjectList),
+			],
+			ContinuationToken: 'ContinuationToken',
+			Delimiter: 'Delimiter',
+			EncodingType: 'EncodingType',
+			IsTruncated: ['IsTruncated', deserializeBoolean],
+			KeyCount: ['KeyCount', deserializeNumber],
+			MaxKeys: ['MaxKeys', deserializeNumber],
+			Name: 'Name',
+			NextContinuationToken: 'NextContinuationToken',
+			Prefix: 'Prefix',
+			StartAfter: 'StartAfter',
+		});
 		return {
 			$metadata: parseMetadata(response),
-			...parsed,
+			...contents,
 		};
 	}
 };
+
+const deserializeCommonPrefixList = (output: any[]) =>
+	output.map(deserializeCommonPrefix);
+
+const deserializeCommonPrefix = (output: any) =>
+	map(output, {
+		Prefix: 'Prefix',
+	});
+
+const deserializeObjectList = (output: any[]) => output.map(deserializeObject);
+
+const deserializeObject = (output: any) =>
+	map(output, {
+		Key: 'Key',
+		LastModified: ['LastModified', deserializeTimestamp],
+		ETag: 'ETag',
+		ChecksumAlgorithm: [
+			'ChecksumAlgorithm',
+			value => emptyArrayGuard(value, deserializeChecksumAlgorithmList),
+		],
+		Size: ['Size', deserializeNumber],
+		StorageClass: 'StorageClass',
+		Owner: ['Owner', deserializeOwner],
+	});
+
+const deserializeChecksumAlgorithmList = (output: any[]) =>
+	output.map(entry => String(entry));
+
+const deserializeOwner = (output: any) =>
+	map(output, { DisplayName: 'DisplayName', ID: 'ID' });
 
 export const listObjectsV2 = composeServiceApi(
 	s3TransferHandler,
