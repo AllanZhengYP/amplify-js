@@ -6,12 +6,9 @@ import {
 	parseMetadata,
 } from '@aws-amplify/core/internals/aws-client-utils';
 import { composeServiceApi } from '@aws-amplify/core/internals/aws-client-utils/composers';
-import type {
-	GetObjectCommandInput,
-	GetObjectCommandOutput,
-} from '@aws-sdk/client-s3';
 
 import { assignSerializableValues, defaultConfig } from './base';
+import type { GetObjectCommandInput, GetObjectCommandOutput } from './types';
 import { parseXmlError, s3TransferHandler } from './utils';
 import {
 	map,
@@ -118,7 +115,7 @@ const getObjectDeserializer = async (
 			}),
 			Metadata: deserializeMetadata(response.headers),
 			$metadata: parseMetadata(response),
-			Body: await response?.body?.blob(),
+			Body: response.body!,
 		};
 	}
 };

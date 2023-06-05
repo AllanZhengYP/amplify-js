@@ -8,7 +8,7 @@ import { composeServiceApi } from '@aws-amplify/core/internals/aws-client-utils/
 import type {
 	ListObjectsV2CommandInput,
 	ListObjectsV2CommandOutput,
-} from '@aws-sdk/client-s3';
+} from './types';
 
 import { assignSerializableValues, defaultConfig } from './base';
 import { parser as xmlParser, parseXmlError, s3TransferHandler } from './utils';
