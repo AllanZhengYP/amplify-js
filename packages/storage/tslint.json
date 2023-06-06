@@ -1,4 +1,7 @@
 {
+	"linterOptions": {
+		"exclude": ["src/AwsClients/S3/types.ts"]
+	},
 	"defaultSeverity": "error",
 	"plugins": ["prettier"],
 	"extends": [],
