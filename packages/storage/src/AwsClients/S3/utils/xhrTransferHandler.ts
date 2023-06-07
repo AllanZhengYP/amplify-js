@@ -118,7 +118,9 @@ export const xhrTransferHandler: TransferHandler<
 					text: () => Promise.resolve(responseText),
 					json: () =>
 						Promise.reject(
-							new Error('Parsing response to JSON is not implemented.')
+							new Error(
+								'Parsing response to JSON is not implemented. Please use response.text() instead.'
+							)
 						),
 				};
 				const response: CompatibleHttpResponse = {
