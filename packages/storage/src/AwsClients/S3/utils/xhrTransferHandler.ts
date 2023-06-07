@@ -1,10 +1,12 @@
 import {
 	HttpRequest,
-	HttpResponse,
 	TransferHandler,
+	ResponseBodyMixin,
 } from '@aws-amplify/core/internals/aws-client-utils';
-import type * as events from 'events';
 import { ConsoleLogger as Logger } from '@aws-amplify/core';
+import type * as events from 'events';
+
+import { CompatibleHttpResponse } from '../types';
 
 export const SEND_UPLOAD_PROGRESS_EVENT = 'sendUploadProgress';
 export const SEND_DOWNLOAD_PROGRESS_EVENT = 'sendDownloadProgress';
@@ -42,9 +44,9 @@ export interface XhrTransferHandlerOptions {
  */
 export const xhrTransferHandler: TransferHandler<
 	HttpRequest,
-	HttpResponse,
+	CompatibleHttpResponse,
 	XhrTransferHandlerOptions
-> = (request, options): Promise<HttpResponse> => {
+> = (request, options): Promise<CompatibleHttpResponse> => {
 	const { url, method, headers, body } = request;
 	const { emitter, responseType, abortSignal } = options;
 
@@ -109,19 +111,26 @@ export const xhrTransferHandler: TransferHandler<
 				const responseHeaders = convertResponseHeaders(
 					xhr.getAllResponseHeaders()
 				);
-				const responseBlob = xhr.response;
+				const responseBlob = xhr.response as Blob;
 				const responseText = xhr.responseText;
-				const response: HttpResponse = {
+				const bodyMixIn: ResponseBodyMixin = {
+					blob: () => Promise.resolve(responseBlob),
+					text: () => Promise.resolve(responseText),
+					json: () =>
+						Promise.reject(
+							new Error('Parsing response to JSON is not implemented.')
+						),
+				};
+				const response: CompatibleHttpResponse = {
 					statusCode: xhr.status,
 					headers: responseHeaders,
-					body: {
-						blob: () => Promise.resolve(responseBlob),
-						text: () => Promise.resolve(responseText),
-						json: () =>
-							Promise.reject(
-								new Error('Parsing response to JSON is not implemented.')
-							),
-					},
+					// The xhr.responseType is only set to 'blob' for streaming binary S3 object data. The streaming data is
+					// exposed via public interface of Storage.get(). So we need to return the response as a Blob object for
+					// backward compatibility. In other cases, the response payload is only used internally, we return it is
+					// {@link ResponseBodyMixin}
+					body: (xhr.responseType === 'blob'
+						? Object.assign(responseBlob, bodyMixIn)
+						: bodyMixIn) as CompatibleHttpResponse['body'],
 				};
 				resolve(response);
 				xhr = null; // clean up request

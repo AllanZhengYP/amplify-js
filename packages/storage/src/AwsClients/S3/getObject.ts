@@ -2,13 +2,16 @@ import {
 	Endpoint,
 	Headers,
 	HttpRequest,
-	HttpResponse,
 	parseMetadata,
 } from '@aws-amplify/core/internals/aws-client-utils';
 import { composeServiceApi } from '@aws-amplify/core/internals/aws-client-utils/composers';
 
 import { assignSerializableValues, defaultConfig } from './base';
-import type { GetObjectCommandInput, GetObjectCommandOutput } from './types';
+import type {
+	CompatibleHttpResponse,
+	GetObjectCommandInput,
+	GetObjectCommandOutput,
+} from './types';
 import { parseXmlError, s3TransferHandler } from './utils';
 import {
 	map,
@@ -64,7 +67,7 @@ const getObjectSerializer = (
 };
 
 const getObjectDeserializer = async (
-	response: HttpResponse
+	response: CompatibleHttpResponse
 ): Promise<GetObjectOutput> => {
 	if (response.statusCode >= 300) {
 		const error = await parseXmlError(response);
