@@ -3,49 +3,13 @@ import {
 	SEND_UPLOAD_PROGRESS_EVENT,
 	SEND_DOWNLOAD_PROGRESS_EVENT,
 } from '../../src/AwsClients/S3/utils/xhrTransferHandler';
-
-type Writeable<T> = { -readonly [P in keyof T]: T[P] };
-type XhrSpy = Writeable<XMLHttpRequest> & {
-	uploadListeners: Partial<{
-		[name in keyof XMLHttpRequestEventTargetEventMap]: Array<
-			(event: XMLHttpRequestEventTargetEventMap[name]) => void
-		>;
-	}>;
-	listeners: Partial<{
-		[name in keyof XMLHttpRequestEventMap]: Array<
-			(event: XMLHttpRequestEventMap[name]) => void
-		>;
-	}>;
-};
-
-// Mock XMLHttpRequest instance so we can spy on the methods and listeners.
-const spyOnXhr = (): XhrSpy => {
-	const uploadListeners: XhrSpy['uploadListeners'] = {};
-	const listeners: XhrSpy['listeners'] = {};
-	const mockRequest = {
-		open: jest.fn(),
-		setRequestHeader: jest.fn(),
-		responseType: '',
-		send: jest.fn(),
-		getAllResponseHeaders: jest.fn(),
-		upload: {
-			addEventListener: jest.fn().mockImplementation((event, cb) => {
-				uploadListeners[event] = uploadListeners[event] || [];
-				uploadListeners[event]!.push(cb);
-			}),
-		},
-		addEventListener: jest.fn().mockImplementation((event, cb) => {
-			listeners[event] = listeners[event] || [];
-			listeners[event]!.push(cb);
-		}),
-		abort: jest.fn(),
-	};
-	window['XMLHttpRequest'] = jest.fn(() => mockRequest) as any;
-	return Object.assign(mockRequest, {
-		uploadListeners,
-		listeners,
-	}) as unknown as XhrSpy;
-};
+import {
+	spyOnXhr,
+	mockXhrResponse,
+	triggerNetWorkError,
+	triggerServerSideAbort,
+	mockXhrReadyState,
+} from './testUtils/mocks';
 
 const defaultRequest = {
 	method: 'GET',
@@ -53,54 +17,6 @@ const defaultRequest = {
 	headers: {
 		foo: 'bar',
 	},
-};
-
-// Mock XMLHttpRequest's response and invoke the corresponding listeners.
-const mockXhrResponse = (
-	mockXhr: XhrSpy,
-	response: {
-		status: number;
-		// XHR's raw header string. @see https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/getAllResponseHeaders#return_value
-		headerString: string;
-		body: BodyInit;
-	}
-) => {
-	mockXhr.readyState = XMLHttpRequest.DONE;
-	mockXhr.status = response.status;
-	mockXhr.responseText = `text from raw response: ${response.body}`;
-	mockXhr.response = response.body;
-	(mockXhr.getAllResponseHeaders as jest.Mock).mockReturnValue(
-		response.headerString
-	);
-	mockXhr.uploadListeners.progress?.forEach(cb => {
-		cb({ name: 'MockUploadEvent' } as any);
-	});
-	mockXhr.listeners.progress?.forEach(cb => {
-		cb({ name: 'MockDownloadEvent' } as any);
-	});
-	mockXhr.listeners.readystatechange?.forEach(cb => {
-		cb({} as any);
-	});
-};
-
-const triggerNetWorkError = (mockXhr: XhrSpy) => {
-	const rawError = new Error('Lower level network error');
-	mockXhr.listeners.error?.forEach(cb => {
-		cb(rawError as any);
-	});
-};
-
-const triggerServerSideAbort = (mockXhr: XhrSpy) => {
-	mockXhr.listeners.abort?.forEach(cb => {
-		cb({} as any);
-	});
-};
-
-const mockXhrReadyState = (mockXhr: XhrSpy, readyState: number) => {
-	mockXhr.readyState = readyState;
-	mockXhr.listeners.readystatechange?.forEach(cb => {
-		cb({} as any);
-	});
 };
 
 const mock200Response = {

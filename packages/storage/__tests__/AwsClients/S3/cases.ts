@@ -1,40 +1,5 @@
-import { HttpRequest } from '@aws-amplify/core/internals/aws-client-utils';
 import { listObjectsV2, getObject } from '../../../src/AwsClients/S3';
-
-type MockFetchResponse = {
-	body: BodyInit;
-	headers: HeadersInit;
-	status: number;
-};
-
-// TODO: remove this after upgrading ts-jest
-type Awaited<T> = T extends PromiseLike<infer U> ? U : never;
-
-type ApiFunctionalTestHappyCase<ApiHandler extends (...args: any) => any> = [
-	'happy case',
-	string, // name
-	ApiHandler, // handler
-	Parameters<ApiHandler>[0], // config
-	Parameters<ApiHandler>[1], // input
-	HttpRequest, // expected request
-	MockFetchResponse, // response
-	Awaited<ReturnType<ApiHandler>> // expected output
-];
-
-type ApiFunctionalTestErrorCase<ApiHandler extends (...args: any) => any> = [
-	'error case',
-	string, // name
-	ApiHandler, // handler
-	Parameters<ApiHandler>[0], // config
-	Parameters<ApiHandler>[1], // input
-	HttpRequest, // expected request
-	MockFetchResponse, // response
-	{} // error
-];
-
-type ApiFunctionalTestCase<ApiHandler extends (...args: any) => any> =
-	| ApiFunctionalTestHappyCase<ApiHandler>
-	| ApiFunctionalTestErrorCase<ApiHandler>;
+import { ApiFunctionalTestCase } from '../testUtils/types';
 
 const EMPTY_SHA256 =
 	'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
