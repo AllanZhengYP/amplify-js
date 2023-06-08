@@ -324,8 +324,36 @@ const getObjectHappyCase: ApiFunctionalTestCase<typeof getObject> = [
 	},
 ];
 
+const getObjectAccelerateEndpoint: ApiFunctionalTestCase<typeof getObject> = [
+	'happy case',
+	'getObject with accelerate endpoint',
+	getObject,
+	{
+		...defaultConfig,
+		useAccelerateEndpoint: true,
+	} as Parameters<typeof getObject>[0],
+	{
+		Bucket: 'bucket',
+		Key: 'key',
+	},
+	expect.objectContaining({
+		url: expect.objectContaining({
+			href: 'https://bucket.s3-accelerate.amazonaws.com/key',
+		}),
+	}),
+	{
+		status: 200,
+		headers: DEFAULT_RESPONSE_HEADERS,
+		body: 'mockBody',
+	},
+	expect.objectContaining({
+		/**	skip validating response */
+	}) as any,
+];
+
 export default [
 	listObjectsV2HappyCase,
 	listObjectsV2ErrorCase,
 	getObjectHappyCase,
+	getObjectAccelerateEndpoint,
 ];

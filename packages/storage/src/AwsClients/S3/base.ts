@@ -25,10 +25,13 @@ type S3EndpointResolverOptions = EndpointResolverOptions & {
 const endpointResolver = ({
 	region,
 	useAccelerateEndpoint,
-}: S3EndpointResolverOptions) => ({
-	// TODO: use accelerate endpoints
-	url: new URL(`https://s3.${region}.${getDnsSuffix(region)}`),
-});
+}: S3EndpointResolverOptions) => {
+	if (useAccelerateEndpoint) {
+		return { url: new URL(`https://s3-accelerate.${getDnsSuffix(region)}`) };
+	} else {
+		return { url: new URL(`https://s3.${region}.${getDnsSuffix(region)}`) };
+	}
+};
 
 /**
  * @internal
@@ -39,6 +42,7 @@ export const defaultConfig = {
 	retryDecider: getRetryDecider(parseXmlError),
 	computeDelay: jitteredBackoff,
 	userAgentValue: getAmplifyUserAgent(), // TODO: use getAmplifyUserAgentString() when available.
+	useAccelerateEndpoint: false,
 };
 
 /**
