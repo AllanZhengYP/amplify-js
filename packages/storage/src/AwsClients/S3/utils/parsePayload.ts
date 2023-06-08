@@ -11,22 +11,16 @@ export const parseXmlError: ErrorParser = async (response?: HttpResponse) => {
 		return;
 	}
 	const { statusCode } = response;
-	let body: unknown;
-	try {
-		body = await parseXmlBody(response);
-	} catch (error) {
-		// TODO
-		throw error;
-	}
-	const code =
-		statusCode === 404
-			? 'NotFound'
-			: (body?.['Code'] as string) || statusCode.toString();
-	const sanitizedCode = code.includes('#') ? code.split('#')[1] : code;
+	const body = await parseXmlBody(response);
+	const code = body?.['Code']
+		? (body.Code as string)
+		: statusCode === 404
+		? 'NotFound'
+		: '' + statusCode;
 	const message = body?.['message'] ?? body?.['Message'] ?? 'UnknownError';
 	const error = new Error(message);
 	return Object.assign(error, {
-		name: sanitizedCode,
+		name: code,
 		$metadata: parseMetadata(response),
 	});
 };
@@ -37,7 +31,11 @@ export const parseXmlBody = async (response: HttpResponse): Promise<any> => {
 	}
 	const data = await response.body.text();
 	if (data?.length > 0) {
-		return parser.parse(data);
+		try {
+			return parser.parse(data);
+		} catch (error) {
+			throw new Error('Failed to parse XML response');
+		}
 	}
 	return {};
 };

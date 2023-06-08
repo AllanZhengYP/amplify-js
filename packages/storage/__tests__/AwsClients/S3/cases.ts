@@ -203,7 +203,7 @@ const listObjectsV2ErrorCase: ApiFunctionalTestCase<typeof listObjectsV2> = [
 			attempts: 1,
 			requestId: MOCK_REQUEST_ID,
 			extendedRequestId: MOCK_EXTENDED_REQUEST_ID,
-			httpStatusCode: 200,
+			httpStatusCode: 403,
 		}),
 		message: 'The resource you requested does not exist',
 		name: 'NoSuchKey',
@@ -253,6 +253,7 @@ const getObjectResponseHeaders = {
 	'x-amz-meta-param2': 'value 2',
 } as const;
 
+// API Reference: https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
 const getObjectHappyCase: ApiFunctionalTestCase<typeof getObject> = [
 	'happy case',
 	'getObject',
@@ -360,7 +361,6 @@ const getObjectHappyCase: ApiFunctionalTestCase<typeof getObject> = [
 
 export default [
 	listObjectsV2HappyCase,
-	// TODO: Error case does not work for now
-	// listObjectsV2ErrorCase
+	listObjectsV2ErrorCase,
 	getObjectHappyCase,
 ];

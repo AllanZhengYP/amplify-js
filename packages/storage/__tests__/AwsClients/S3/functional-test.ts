@@ -15,9 +15,13 @@ const mockBinaryResponse = ({
 	body: string;
 }): HttpResponse => {
 	const responseBody = {
-		json: async () => `JSON format of body ${body}`,
-		blob: async () => `Blob format of body ${body}` as unknown as Blob,
-		text: async () => `text format of body ${body}`,
+		json: async (): Promise<any> => {
+			throw new Error(
+				'Parsing response to JSON is not implemented. Please use response.text() instead.'
+			);
+		},
+		blob: async () => body as unknown as Blob,
+		text: async () => body,
 	} as HttpResponse['body'];
 	return {
 		statusCode: status,
@@ -42,11 +46,12 @@ describe('S3 APIs functional test', () => {
 			response,
 			outputOrError
 		) => {
-			expect.assertions(caseType === 'happy case' ? 2 : 1);
+			expect.assertions(2);
 			(fetchTransferHandler as jest.Mock).mockResolvedValue(
 				mockBinaryResponse(response as any)
 			);
 			try {
+				// @ts-ignore
 				const output = await handler(config, input);
 				if (caseType === 'happy case') {
 					expect(output).toEqual(outputOrError);
@@ -61,7 +66,8 @@ describe('S3 APIs functional test', () => {
 				if (caseType === 'happy case') {
 					fail(`${name} ${caseType} should succeed`);
 				} else {
-					expect(e).toEqual(outputOrError);
+					expect(e).toBeInstanceOf(Error);
+					expect(e).toEqual(expect.objectContaining(outputOrError));
 				}
 			}
 		}
