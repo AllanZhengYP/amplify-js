@@ -3,7 +3,6 @@
 
 import { ConsoleLogger as Logger } from '@aws-amplify/core';
 import {
-	CreateMultipartUploadCommand,
 	UploadPartCommand,
 	CompleteMultipartUploadCommand,
 	CompleteMultipartUploadCommandInput,
@@ -12,7 +11,11 @@ import {
 	CompletedPart,
 	S3Client,
 } from '@aws-sdk/client-s3';
-import { PutObjectInput, putObject } from '../AwsClients/S3';
+import {
+	PutObjectInput,
+	putObject,
+	createMultipartUpload,
+} from '../AwsClients/S3';
 import {
 	SEND_UPLOAD_PROGRESS_EVENT,
 	SEND_DOWNLOAD_PROGRESS_EVENT,
@@ -48,6 +51,7 @@ export class AWSS3ProviderManagedUpload {
 	private opts = null;
 	private completedParts: CompletedPart[] = [];
 	private s3client: S3Client;
+	private s3HandlerConfig: any; // TODO: type this
 	private uploadId: string | undefined;
 	private partSize = DEFAULT_PART_SIZE;
 
@@ -61,6 +65,10 @@ export class AWSS3ProviderManagedUpload {
 		this.opts = opts;
 		this.emitter = emitter;
 		this.s3client = this._createNewS3Client(opts, emitter);
+		this.s3HandlerConfig = {
+			...opts,
+			emitter,
+		};
 	}
 
 	public async upload() {
@@ -70,13 +78,7 @@ export class AWSS3ProviderManagedUpload {
 			if (this.totalBytesToUpload <= DEFAULT_PART_SIZE) {
 				// Multipart upload is not required. Upload the sanitized body as is
 				this.params.Body = this.body;
-				return putObject(
-					{
-						...this.opts,
-						emitter: this.emitter,
-					},
-					this.params
-				);
+				return putObject(this.s3HandlerConfig, this.params);
 			} else {
 				// Step 1: Determine appropriate part size.
 				this.partSize = calculatePartSize(this.totalBytesToUpload);
@@ -141,10 +143,10 @@ export class AWSS3ProviderManagedUpload {
 
 	private async createMultiPartUpload() {
 		try {
-			const createMultiPartUploadCommand = new CreateMultipartUploadCommand(
+			const response = await createMultipartUpload(
+				this.s3HandlerConfig,
 				this.params
 			);
-			const response = await this.s3client.send(createMultiPartUploadCommand);
 			logger.debug(response.UploadId);
 			return response.UploadId;
 		} catch (error) {

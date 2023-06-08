@@ -2,6 +2,11 @@ import {
 	listObjectsV2,
 	getObject,
 	putObject,
+	createMultipartUpload,
+	uploadPart,
+	completeMultipartUpload,
+	listParts,
+	abortMultipartUpload,
 } from '../../../src/AwsClients/S3';
 import { ApiFunctionalTestCase } from '../testUtils/types';
 
@@ -13,6 +18,13 @@ const MOCK_EXTENDED_REQUEST_ID = 'requestId2';
 const DEFAULT_RESPONSE_HEADERS = {
 	'x-amz-id-2': MOCK_EXTENDED_REQUEST_ID,
 	'x-amz-request-id': MOCK_REQUEST_ID,
+};
+
+const expectedMetadata = {
+	attempts: 1,
+	requestId: MOCK_REQUEST_ID,
+	extendedRequestId: MOCK_EXTENDED_REQUEST_ID,
+	httpStatusCode: 200,
 };
 
 const defaultConfig = {
@@ -140,12 +152,7 @@ const listObjectsV2HappyCase: ApiFunctionalTestCase<typeof listObjectsV2> = [
 		NextContinuationToken: 'Next1ueGcxLPRx1Tr/XYExHnhbYLgveDs2J/wm36Hy4vbOwM=',
 		Prefix: '',
 		StartAfter: 'ExampleGuide.pdf',
-		$metadata: expect.objectContaining({
-			attempts: 1,
-			requestId: MOCK_REQUEST_ID,
-			extendedRequestId: MOCK_EXTENDED_REQUEST_ID,
-			httpStatusCode: 200,
-		}),
+		$metadata: expect.objectContaining(expectedMetadata),
 	},
 ];
 
@@ -169,9 +176,7 @@ const listObjectsV2ErrorCase: ApiFunctionalTestCase<typeof listObjectsV2> = [
 	},
 	{
 		$metadata: expect.objectContaining({
-			attempts: 1,
-			requestId: MOCK_REQUEST_ID,
-			extendedRequestId: MOCK_EXTENDED_REQUEST_ID,
+			...expectedMetadata,
 			httpStatusCode: 403,
 		}),
 		message: 'The resource you requested does not exist',
@@ -250,7 +255,7 @@ const getObjectHappyCase: ApiFunctionalTestCase<typeof getObject> = [
 			host: 'bucket.s3.us-east-1.amazonaws.com',
 			'x-amz-server-side-encryption-customer-algorithm': 'SSECustomerAlgorithm',
 			'x-amz-server-side-encryption-customer-key': 'SSECustomerKey',
-			'x-amz-server-side-encryption-customer-key-MD5': 'SSECustomerKeyMD5',
+			'x-amz-server-side-encryption-customer-key-md5': 'SSECustomerKeyMD5',
 			'x-amz-content-sha256': EMPTY_SHA256,
 			'x-amz-date': expect.stringMatching(/^\d{8}T\d{6}Z/),
 			'x-amz-user-agent': expect.stringContaining('aws-amplify'),
@@ -319,12 +324,7 @@ const getObjectHappyCase: ApiFunctionalTestCase<typeof getObject> = [
 			blob: expect.any(Function),
 			json: expect.any(Function),
 		}),
-		$metadata: expect.objectContaining({
-			attempts: 1,
-			requestId: MOCK_REQUEST_ID,
-			extendedRequestId: MOCK_EXTENDED_REQUEST_ID,
-			httpStatusCode: 200,
-		}),
+		$metadata: expect.objectContaining(expectedMetadata),
 	},
 ];
 
@@ -355,50 +355,54 @@ const getObjectAccelerateEndpoint: ApiFunctionalTestCase<typeof getObject> = [
 	}) as any,
 ];
 
+const putObjectRequest = {
+	Bucket: 'bucket',
+	Key: 'key',
+	Body: 'body',
+	ServerSideEncryption: 'ServerSideEncryption',
+	SSECustomerAlgorithm: 'SSECustomerAlgorithm',
+	SSECustomerKey: 'SSECustomerKey',
+	SSECustomerKeyMD5: 'SSECustomerKeyMD5',
+	SSEKMSKeyId: 'SSEKMSKeyId',
+	ACL: 'public-read',
+	CacheControl: 'CacheControl',
+	ContentDisposition: 'ContentDisposition',
+	ContentEncoding: 'ContentEncoding',
+	ContentType: 'ContentType',
+	Expires: new Date('2020-01-01'),
+	Metadata: {
+		Param1: 'value 1',
+	},
+	Tagging: 'Tagging',
+};
+
+const expectedPutObjectRequestHeaders = {
+	'x-amz-server-side-encryption': 'ServerSideEncryption',
+	'x-amz-server-side-encryption-customer-algorithm': 'SSECustomerAlgorithm',
+	'x-amz-server-side-encryption-customer-key': 'SSECustomerKey',
+	'x-amz-server-side-encryption-customer-key-md5': 'SSECustomerKeyMD5',
+	'x-amz-server-side-encryption-aws-kms-key-id': 'SSEKMSKeyId',
+	'x-amz-acl': 'public-read',
+	'cache-control': 'CacheControl',
+	'content-disposition': 'ContentDisposition',
+	'content-encoding': 'ContentEncoding',
+	'content-type': 'ContentType',
+	expires: 'Wed, 01 Jan 2020 00:00:00 GMT',
+	'x-amz-tagging': 'Tagging',
+	'x-amz-meta-param1': 'value 1',
+};
+
 const putObjectHappyCase: ApiFunctionalTestCase<typeof putObject> = [
 	'happy case',
 	'putObject',
 	putObject,
 	defaultConfig,
-	{
-		Bucket: 'bucket',
-		Key: 'key',
-		Body: 'body',
-		ServerSideEncryption: 'SSECustomerAlgorithm',
-		SSECustomerAlgorithm: 'SSECustomerAlgorithm',
-		SSECustomerKey: 'SSECustomerKey',
-		SSECustomerKeyMD5: 'SSECustomerKeyMD5',
-		SSEKMSKeyId: 'SSEKMSKeyId',
-		ACL: 'public-read',
-		CacheControl: 'CacheControl',
-		ContentDisposition: 'ContentDisposition',
-		ContentEncoding: 'ContentEncoding',
-		ContentType: 'ContentType',
-		Expires: new Date('2020-01-01'),
-		Metadata: {
-			Param1: 'value 1',
-		},
-		Tagging: 'Tagging',
-	},
+	putObjectRequest,
 	expect.objectContaining({
 		url: expect.objectContaining({
 			href: 'https://bucket.s3.us-east-1.amazonaws.com/key',
 		}),
-		headers: expect.objectContaining({
-			'x-amz-server-side-encryption': 'SSECustomerAlgorithm',
-			'x-amz-server-side-encryption-customer-algorithm': 'SSECustomerAlgorithm',
-			'x-amz-server-side-encryption-customer-key': 'SSECustomerKey',
-			'x-amz-server-side-encryption-customer-key-md5': 'SSECustomerKeyMD5',
-			'x-amz-server-side-encryption-aws-kms-key-id': 'SSEKMSKeyId',
-			'x-amz-acl': 'public-read',
-			'cache-control': 'CacheControl',
-			'content-disposition': 'ContentDisposition',
-			'content-encoding': 'ContentEncoding',
-			'content-type': 'ContentType',
-			expires: 'Wed, 01 Jan 2020 00:00:00 GMT',
-			'x-amz-tagging': 'Tagging',
-			'x-amz-meta-param1': 'value 1',
-		}),
+		headers: expect.objectContaining(expectedPutObjectRequestHeaders),
 		body: 'body',
 	}),
 	{
@@ -411,14 +415,260 @@ const putObjectHappyCase: ApiFunctionalTestCase<typeof putObject> = [
 		body: '',
 	},
 	{
-		$metadata: expect.objectContaining({
-			attempts: 1,
-			requestId: MOCK_REQUEST_ID,
-			extendedRequestId: MOCK_EXTENDED_REQUEST_ID,
-			httpStatusCode: 200,
-		}),
+		$metadata: expect.objectContaining(expectedMetadata),
 		ETag: 'etag',
 		VersionId: 'versionId',
+	},
+];
+
+// API reference: https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateMultipartUpload.html
+const createMultiPartUploadHappyCase: ApiFunctionalTestCase<
+	typeof createMultipartUpload
+> = [
+	'happy case',
+	'createMultipartUpload',
+	createMultipartUpload,
+	defaultConfig,
+	putObjectRequest, // CreateMultipartUpload has same input as putObject API.
+	expect.objectContaining({
+		url: expect.objectContaining({
+			href: 'https://bucket.s3.us-east-1.amazonaws.com/key?uploads',
+		}),
+		method: 'POST',
+		headers: expect.objectContaining(expectedPutObjectRequestHeaders),
+	}),
+	{
+		status: 200,
+		headers: { ...DEFAULT_RESPONSE_HEADERS },
+		body: `<InitiateMultipartUploadResult>
+		<Bucket>string</Bucket>
+		<Key>string</Key>
+		<UploadId>string</UploadId>
+	 </InitiateMultipartUploadResult>`,
+	},
+	{
+		$metadata: expect.objectContaining(expectedMetadata),
+		UploadId: 'string',
+	},
+];
+
+// API reference: https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html
+const uploadPartHappyCase: ApiFunctionalTestCase<typeof uploadPart> = [
+	'happy case',
+	'uploadPart',
+	uploadPart,
+	defaultConfig,
+	{
+		Bucket: 'bucket',
+		Key: 'key',
+		Body: 'body',
+		PartNumber: 1,
+		UploadId: 'uploadId',
+		SSECustomerAlgorithm: 'SSECustomerAlgorithm',
+		SSECustomerKey: 'SSECustomerKey',
+		SSECustomerKeyMD5: 'SSECustomerKeyMD5',
+	},
+	expect.objectContaining({
+		url: expect.objectContaining({
+			href: 'https://bucket.s3.us-east-1.amazonaws.com/key?partNumber=1&uploadId=uploadId',
+		}),
+		method: 'PUT',
+		headers: expect.objectContaining({
+			'x-amz-server-side-encryption-customer-algorithm': 'SSECustomerAlgorithm',
+			'x-amz-server-side-encryption-customer-key': 'SSECustomerKey',
+			'x-amz-server-side-encryption-customer-key-md5': 'SSECustomerKeyMD5',
+		}),
+		body: 'body',
+	}),
+	{
+		status: 200,
+		headers: { ...DEFAULT_RESPONSE_HEADERS, etag: 'etag' },
+		body: '',
+	},
+	{
+		$metadata: expect.objectContaining(expectedMetadata),
+		ETag: 'etag',
+	},
+];
+
+// API reference: https://docs.aws.amazon.com/AmazonS3/latest/API/API_CompleteMultipartUpload.html
+const completeMultipartUploadHappyCase: ApiFunctionalTestCase<
+	typeof completeMultipartUpload
+> = [
+	'happy case',
+	'completeMultipartUpload',
+	completeMultipartUpload,
+	defaultConfig,
+	{
+		Bucket: 'bucket',
+		Key: 'key',
+		MultipartUpload: {
+			Parts: [
+				{
+					ETag: 'etag1',
+					PartNumber: 1,
+				},
+				{
+					ETag: 'etag2',
+					PartNumber: 2,
+				},
+			],
+		},
+		UploadId: 'uploadId',
+		SSECustomerAlgorithm: 'SSECustomerAlgorithm',
+		SSECustomerKey: 'SSECustomerKey',
+		SSECustomerKeyMD5: 'SSECustomerKeyMD5',
+	},
+	expect.objectContaining({
+		url: expect.objectContaining({
+			href: 'https://bucket.s3.us-east-1.amazonaws.com/key?uploadId=uploadId',
+		}),
+		method: 'POST',
+		headers: expect.objectContaining({
+			'x-amz-server-side-encryption-customer-algorithm': 'SSECustomerAlgorithm',
+			'x-amz-server-side-encryption-customer-key': 'SSECustomerKey',
+			'x-amz-server-side-encryption-customer-key-md5': 'SSECustomerKeyMD5',
+		}),
+		body:
+			'<?xml version="1.0" encoding="UTF-8"?>' +
+			'<CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">' +
+			'<Part>' +
+			'<ETag>etag1</ETag>' +
+			'<PartNumber>1</PartNumber>' +
+			'</Part>' +
+			'<Part>' +
+			'<ETag>etag2</ETag>' +
+			'<PartNumber>2</PartNumber>' +
+			'</Part>' +
+			'</CompleteMultipartUpload>',
+	}),
+	{
+		status: 200,
+		headers: { ...DEFAULT_RESPONSE_HEADERS },
+		body:
+			'<?xml version="1.0" encoding="UTF-8"?>' +
+			'<CompleteMultipartUploadResult>' +
+			'<Location>location</Location>' +
+			'<Key>key</Key>' +
+			'<ETag>etag</ETag>' +
+			'</CompleteMultipartUploadResult>',
+	},
+	{
+		$metadata: expect.objectContaining(expectedMetadata),
+		Location: 'location',
+		Key: 'key',
+		ETag: 'etag',
+	},
+];
+
+const completeMultipartUploadErrorCase: ApiFunctionalTestCase<
+	typeof completeMultipartUpload
+> = [
+	'error case',
+	'completeMultipartUpload',
+	completeMultipartUpload,
+	defaultConfig,
+	completeMultipartUploadHappyCase[4],
+	completeMultipartUploadHappyCase[5],
+	{
+		status: 403,
+		headers: DEFAULT_RESPONSE_HEADERS,
+		body:
+			'<?xml version="1.0" encoding="UTF-8"?>' +
+			'<Error>' +
+			'<Code>AccessDenied</Code>' +
+			'<Message>Access Denied</Message>' +
+			'<RequestId>656c76696e6727732072657175657374</RequestId>' +
+			'<HostId>Uuag1LuByRx9e6j5Onimru9pO4ZVKnJ2Qz7/C1NPcfTWAtRPfTaOFg==</HostId>' +
+			'</Error>',
+	},
+	{
+		$metadata: expect.objectContaining({
+			...expectedMetadata,
+			httpStatusCode: 403,
+		}),
+		message: 'Access Denied',
+		name: 'AccessDenied',
+	},
+];
+
+const listPartsHappyCase: ApiFunctionalTestCase<typeof listParts> = [
+	'happy case',
+	'listParts',
+	listParts,
+	defaultConfig,
+	{
+		Bucket: 'bucket',
+		Key: 'key',
+		UploadId: 'uploadId',
+	},
+	expect.objectContaining({
+		url: expect.objectContaining({
+			href: 'https://bucket.s3.us-east-1.amazonaws.com/key?uploadId=uploadId',
+		}),
+		method: 'GET',
+	}),
+	{
+		status: 200,
+		headers: DEFAULT_RESPONSE_HEADERS,
+		body:
+			'<?xml version="1.0" encoding="UTF-8"?>' +
+			'<ListPartsResult>' +
+			'<UploadId>uploadId</UploadId>' +
+			'<Part>' +
+			'<PartNumber>1</PartNumber>' +
+			'<ETag>etag1</ETag>' +
+			'</Part>' +
+			'<Part>' +
+			'<PartNumber>2</PartNumber>' +
+			'<ETag>etag2</ETag>' +
+			'</Part>' +
+			'</ListPartsResult>',
+	},
+	{
+		$metadata: expect.objectContaining(expectedMetadata),
+		UploadId: 'uploadId',
+		Parts: [
+			{
+				PartNumber: 1,
+				ETag: 'etag1',
+			},
+			{
+				PartNumber: 2,
+				ETag: 'etag2',
+			},
+		],
+	},
+];
+
+const abortMultipartUploadHappyCase: ApiFunctionalTestCase<
+	typeof abortMultipartUpload
+> = [
+	'happy case',
+	'abortMultipartUpload',
+	abortMultipartUpload,
+	defaultConfig,
+	{
+		Bucket: 'bucket',
+		Key: 'key',
+		UploadId: 'uploadId',
+	},
+	expect.objectContaining({
+		url: expect.objectContaining({
+			href: 'https://bucket.s3.us-east-1.amazonaws.com/key?uploadId=uploadId',
+		}),
+		method: 'DELETE',
+	}),
+	{
+		status: 204,
+		headers: DEFAULT_RESPONSE_HEADERS,
+		body: '',
+	},
+	{
+		$metadata: expect.objectContaining({
+			...expectedMetadata,
+			httpStatusCode: 204,
+		}),
 	},
 ];
 
@@ -428,4 +678,10 @@ export default [
 	getObjectHappyCase,
 	getObjectAccelerateEndpoint,
 	putObjectHappyCase,
+	createMultiPartUploadHappyCase,
+	uploadPartHappyCase,
+	completeMultipartUploadHappyCase,
+	completeMultipartUploadErrorCase,
+	listPartsHappyCase,
+	abortMultipartUploadHappyCase,
 ];

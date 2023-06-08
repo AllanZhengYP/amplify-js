@@ -64,7 +64,7 @@ describe('S3 APIs functional test', () => {
 				}
 			} catch (e) {
 				if (caseType === 'happy case') {
-					fail(`${name} ${caseType} should succeed`);
+					fail(`${name} ${caseType} should succeed: ${e}`);
 				} else {
 					expect(e).toBeInstanceOf(Error);
 					expect(e).toEqual(expect.objectContaining(outputOrError));

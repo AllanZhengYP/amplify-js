@@ -9,10 +9,10 @@ import { composeServiceApi } from '@aws-amplify/core/internals/aws-client-utils/
 import { defaultConfig } from './base';
 import type { PutObjectCommandInput, PutObjectCommandOutput } from './types';
 import {
-	assignSerializableValues,
 	map,
 	parseXmlError,
 	s3TransferHandler,
+	serializeObjectConfigsToHeaders,
 } from './utils';
 import type { S3ProviderPutConfig } from '../../types';
 
@@ -50,22 +50,7 @@ const putObjectSerializer = (
 	input: PutObjectInput,
 	endpoint: Endpoint
 ): HttpRequest => {
-	const headers = assignSerializableValues({
-		'x-amz-server-side-encryption': input.ServerSideEncryption,
-		'x-amz-server-side-encryption-customer-algorithm':
-			input.SSECustomerAlgorithm,
-		'x-amz-server-side-encryption-customer-key': input.SSECustomerKey,
-		'x-amz-server-side-encryption-customer-key-md5': input.SSECustomerKeyMD5,
-		'x-amz-server-side-encryption-aws-kms-key-id': input.SSEKMSKeyId,
-		'x-amz-acl': input.ACL,
-		'cache-control': input.CacheControl,
-		'content-disposition': input.ContentDisposition,
-		'content-encoding': input.ContentEncoding,
-		'content-type': input.ContentType,
-		expires: input.Expires?.toUTCString(),
-		'x-amz-tagging': input.Tagging,
-		...serializeMetadata(input.Metadata),
-	});
+	const headers = serializeObjectConfigsToHeaders(input);
 	const url = new URL(endpoint.url.toString());
 	url.hostname = `${input.Bucket}.${url.hostname}`;
 	url.pathname = `/${input.Key}`;
@@ -76,14 +61,6 @@ const putObjectSerializer = (
 		body: input.Body,
 	};
 };
-
-const serializeMetadata = (
-	metadata: Record<string, string> = {}
-): Record<string, string> =>
-	Object.keys(metadata).reduce((acc: any, suffix: string) => {
-		acc[`x-amz-meta-${suffix.toLowerCase()}`] = metadata[suffix];
-		return acc;
-	}, {});
 
 const putObjectDeserializer = async (
 	response: HttpResponse

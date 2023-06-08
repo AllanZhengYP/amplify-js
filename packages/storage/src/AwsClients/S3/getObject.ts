@@ -13,13 +13,13 @@ import type {
 	GetObjectCommandOutput,
 } from './types';
 import {
-	assignSerializableValues,
 	deserializeBoolean,
 	deserializeNumber,
 	deserializeTimestamp,
 	map,
 	parseXmlError,
 	s3TransferHandler,
+	serializeObjectSsecOptionsToHeaders,
 } from './utils';
 
 export type GetObjectInput = Pick<
@@ -42,21 +42,14 @@ const getObjectSerializer = (
 	input: GetObjectInput,
 	endpoint: Endpoint
 ): HttpRequest => {
-	const headers = assignSerializableValues({
-		'x-amz-server-side-encryption-customer-algorithm':
-			input.SSECustomerAlgorithm,
-		'x-amz-server-side-encryption-customer-key': input.SSECustomerKey,
-		'x-amz-server-side-encryption-customer-key-MD5': input.SSECustomerKeyMD5,
+	const headers = serializeObjectSsecOptionsToHeaders(input);
+	const query = map(input, {
+		'response-cache-control': 'ResponseCacheControl',
+		'response-content-disposition': 'ResponseContentDisposition',
+		'response-content-encoding': 'ResponseContentEncoding',
+		'response-content-language': 'ResponseContentLanguage',
+		'response-content-type': 'ResponseContentType',
 	});
-	const query = {
-		...map(input, {
-			'response-cache-control': 'ResponseCacheControl',
-			'response-content-disposition': 'ResponseContentDisposition',
-			'response-content-encoding': 'ResponseContentEncoding',
-			'response-content-language': 'ResponseContentLanguage',
-			'response-content-type': 'ResponseContentType',
-		}),
-	};
 	const url = new URL(endpoint.url.toString());
 	url.hostname = `${input.Bucket}.${url.hostname}`;
 	url.pathname = `/${input.Key}`;

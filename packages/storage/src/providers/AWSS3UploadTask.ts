@@ -7,7 +7,6 @@ import {
 	Part,
 	AbortMultipartUploadCommand,
 	ListPartsCommand,
-	CreateMultipartUploadCommand,
 	ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import * as events from 'events';
@@ -15,7 +14,7 @@ import axios, { Canceler, CancelTokenSource } from 'axios';
 import { HttpHandlerOptions } from '@aws-sdk/types';
 import { Logger } from '@aws-amplify/core';
 import { UploadTask } from '../types/Provider';
-import { PutObjectInput } from '../AwsClients/S3';
+import { PutObjectInput, createMultipartUpload } from '../AwsClients/S3';
 import {
 	calculatePartSize,
 	DEFAULT_PART_SIZE,
@@ -430,8 +429,16 @@ export class AWSS3UploadTask implements UploadTask {
 	}
 
 	private async _initMultipartUpload() {
-		const res = await this.s3client.send(
-			new CreateMultipartUploadCommand(this.params)
+		const res = await createMultipartUpload(
+			{
+				//TODO: fix this
+				region: 'foo',
+				credentials: {
+					accessKeyId: 'key',
+					secretAccessKey: 'secret',
+				},
+			},
+			this.params
 		);
 		this._cache({
 			uploadId: res.UploadId,
