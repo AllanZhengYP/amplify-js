@@ -6,19 +6,21 @@ import {
 } from '@aws-amplify/core/internals/aws-client-utils';
 import { composeServiceApi } from '@aws-amplify/core/internals/aws-client-utils/composers';
 
-import { assignSerializableValues, defaultConfig } from './base';
+import { defaultConfig } from './base';
 import type {
 	CompatibleHttpResponse,
 	GetObjectCommandInput,
 	GetObjectCommandOutput,
 } from './types';
-import { parseXmlError, s3TransferHandler } from './utils';
 import {
-	map,
+	assignSerializableValues,
 	deserializeBoolean,
-	deserializeTimestamp,
 	deserializeNumber,
-} from './utils/deserializeHelpers';
+	deserializeTimestamp,
+	map,
+	parseXmlError,
+	s3TransferHandler,
+} from './utils';
 
 export type GetObjectInput = Pick<
 	GetObjectCommandInput,
