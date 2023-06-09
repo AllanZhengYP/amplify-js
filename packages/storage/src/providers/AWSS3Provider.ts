@@ -17,7 +17,6 @@ import {
 	DeleteObjectCommandInput,
 	CopyObjectCommandInput,
 	CopyObjectCommand,
-	PutObjectCommandInput,
 	GetObjectCommandInput,
 	ListObjectsV2Request,
 	HeadObjectCommand,
@@ -29,7 +28,7 @@ import { S3RequestPresigner } from '@aws-sdk/s3-request-presigner';
 // 	SEND_DOWNLOAD_PROGRESS_EVENT,
 // 	SEND_UPLOAD_PROGRESS_EVENT,
 // } from './axios-http-handler';
-import { getObject } from '../AwsClients/S3/getObject';
+import { getObject, PutObjectInput } from '../AwsClients/S3';
 import {
 	SEND_DOWNLOAD_PROGRESS_EVENT,
 	SEND_UPLOAD_PROGRESS_EVENT,
@@ -83,7 +82,7 @@ interface AddTaskInput {
 	emitter: events.EventEmitter;
 	key: string;
 	s3Client: S3Client;
-	params?: PutObjectCommandInput;
+	params?: PutObjectInput;
 }
 
 /**
@@ -523,7 +522,7 @@ export class AWSS3Provider implements StorageProvider {
 	 */
 	public put<T extends S3ProviderPutConfig>(
 		key: string,
-		object: PutObjectCommandInput['Body'],
+		object: PutObjectInput['Body'],
 		config?: T
 	): S3ProviderPutOutput<T> {
 		const opt = Object.assign({}, this._config, config);
@@ -547,7 +546,7 @@ export class AWSS3Provider implements StorageProvider {
 		} = opt;
 		const type = contentType ? contentType : 'binary/octet-stream';
 
-		const params: PutObjectCommandInput = {
+		const params: PutObjectInput = {
 			Bucket: bucket,
 			Key: key,
 			Body: object,

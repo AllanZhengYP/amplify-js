@@ -8,7 +8,6 @@ import {
 	AbortMultipartUploadCommand,
 	ListPartsCommand,
 	CreateMultipartUploadCommand,
-	PutObjectCommandInput,
 	ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import * as events from 'events';
@@ -16,6 +15,7 @@ import axios, { Canceler, CancelTokenSource } from 'axios';
 import { HttpHandlerOptions } from '@aws-sdk/types';
 import { Logger } from '@aws-amplify/core';
 import { UploadTask } from '../types/Provider';
+import { PutObjectInput } from '../AwsClients/S3';
 import {
 	calculatePartSize,
 	DEFAULT_PART_SIZE,
@@ -51,7 +51,7 @@ export interface AWSS3UploadTaskParams {
 	file: Blob;
 	storage: Storage;
 	level: StorageAccessLevel;
-	params: PutObjectCommandInput;
+	params: PutObjectInput;
 	prefixPromise: Promise<string>;
 	emitter?: events.EventEmitter;
 }
@@ -98,7 +98,7 @@ export class AWSS3UploadTask implements UploadTask {
 	private readonly storage: Storage;
 	private readonly storageSync: Promise<any>;
 	private readonly fileId: string;
-	private readonly params: PutObjectCommandInput;
+	private readonly params: PutObjectInput;
 	private readonly prefixPromise: Promise<string>;
 	private partSize: number = DEFAULT_PART_SIZE;
 	private inProgress: InProgressRequest[] = [];

@@ -1,4 +1,8 @@
-import { listObjectsV2, getObject } from '../../../src/AwsClients/S3';
+import {
+	listObjectsV2,
+	getObject,
+	putObject,
+} from '../../../src/AwsClients/S3';
 import { ApiFunctionalTestCase } from '../testUtils/types';
 
 const EMPTY_SHA256 =
@@ -351,9 +355,77 @@ const getObjectAccelerateEndpoint: ApiFunctionalTestCase<typeof getObject> = [
 	}) as any,
 ];
 
+const putObjectHappyCase: ApiFunctionalTestCase<typeof putObject> = [
+	'happy case',
+	'putObject',
+	putObject,
+	defaultConfig,
+	{
+		Bucket: 'bucket',
+		Key: 'key',
+		Body: 'body',
+		ServerSideEncryption: 'SSECustomerAlgorithm',
+		SSECustomerAlgorithm: 'SSECustomerAlgorithm',
+		SSECustomerKey: 'SSECustomerKey',
+		SSECustomerKeyMD5: 'SSECustomerKeyMD5',
+		SSEKMSKeyId: 'SSEKMSKeyId',
+		ACL: 'public-read',
+		CacheControl: 'CacheControl',
+		ContentDisposition: 'ContentDisposition',
+		ContentEncoding: 'ContentEncoding',
+		ContentType: 'ContentType',
+		Expires: new Date('2020-01-01'),
+		Metadata: {
+			Param1: 'value 1',
+		},
+		Tagging: 'Tagging',
+	},
+	expect.objectContaining({
+		url: expect.objectContaining({
+			href: 'https://bucket.s3.us-east-1.amazonaws.com/key',
+		}),
+		headers: expect.objectContaining({
+			'x-amz-server-side-encryption': 'SSECustomerAlgorithm',
+			'x-amz-server-side-encryption-customer-algorithm': 'SSECustomerAlgorithm',
+			'x-amz-server-side-encryption-customer-key': 'SSECustomerKey',
+			'x-amz-server-side-encryption-customer-key-md5': 'SSECustomerKeyMD5',
+			'x-amz-server-side-encryption-aws-kms-key-id': 'SSEKMSKeyId',
+			'x-amz-acl': 'public-read',
+			'cache-control': 'CacheControl',
+			'content-disposition': 'ContentDisposition',
+			'content-encoding': 'ContentEncoding',
+			'content-type': 'ContentType',
+			expires: 'Wed, 01 Jan 2020 00:00:00 GMT',
+			'x-amz-tagging': 'Tagging',
+			'x-amz-meta-param1': 'value 1',
+		}),
+		body: 'body',
+	}),
+	{
+		status: 200,
+		headers: {
+			...DEFAULT_RESPONSE_HEADERS,
+			'x-amz-version-id': 'versionId',
+			etag: 'etag',
+		},
+		body: '',
+	},
+	{
+		$metadata: expect.objectContaining({
+			attempts: 1,
+			requestId: MOCK_REQUEST_ID,
+			extendedRequestId: MOCK_EXTENDED_REQUEST_ID,
+			httpStatusCode: 200,
+		}),
+		ETag: 'etag',
+		VersionId: 'versionId',
+	},
+];
+
 export default [
 	listObjectsV2HappyCase,
 	listObjectsV2ErrorCase,
 	getObjectHappyCase,
 	getObjectAccelerateEndpoint,
+	putObjectHappyCase,
 ];

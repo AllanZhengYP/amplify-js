@@ -25,8 +25,8 @@ import {
 	UploadTask,
 } from './types';
 import axios, { CancelTokenSource } from 'axios';
-import { PutObjectCommandInput } from '@aws-sdk/client-s3';
 import { AWSS3UploadTask } from './providers/AWSS3UploadTask';
+import { PutObjectInput } from './AwsClients/S3';
 
 const logger = new Logger('StorageClass');
 const loggerStorageInstance = new Logger('Storage'); // Logging relating to Storage instance management
@@ -322,7 +322,7 @@ export class Storage {
 	): StoragePutOutput<T>;
 	public put<T extends StorageProvider = AWSS3Provider>(
 		key: string,
-		object: Omit<PutObjectCommandInput['Body'], 'ReadableStream' | 'Readable'>,
+		object: Omit<PutObjectInput['Body'], 'ReadableStream' | 'Readable'>,
 		config?: StoragePutConfig<T>
 	): StoragePutOutput<T> {
 		const provider = config?.provider || DEFAULT_PROVIDER;

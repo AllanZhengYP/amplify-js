@@ -3,6 +3,8 @@ import {
 	GetObjectCommandOutput,
 	ListObjectsV2CommandInput,
 	ListObjectsV2CommandOutput,
+	PutObjectCommandInput,
+	PutObjectCommandOutput,
 } from '@aws-sdk/client-s3';
 
 export {
@@ -10,4 +12,6 @@ export {
 	GetObjectCommandOutput,
 	ListObjectsV2CommandInput,
 	ListObjectsV2CommandOutput,
+	PutObjectCommandInput,
+	PutObjectCommandOutput,
 };
