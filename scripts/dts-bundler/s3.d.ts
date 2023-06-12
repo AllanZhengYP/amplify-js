@@ -19,6 +19,7 @@ import {
 	CopyObjectCommandOutput,
 	HeadObjectCommandInput,
 	HeadObjectCommandOutput,
+	DeleteObjectCommandInput,
 } from '@aws-sdk/client-s3';
 
 export {
@@ -42,4 +43,5 @@ export {
 	CopyObjectCommandOutput,
 	HeadObjectCommandInput,
 	HeadObjectCommandOutput,
+	DeleteObjectCommandInput,
 };

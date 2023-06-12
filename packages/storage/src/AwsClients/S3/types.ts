@@ -1041,6 +1041,57 @@ export interface CreateMultipartUploadRequest {
 /**
  * @public
  *
+ * The input for {@link DeleteObjectCommand}.
+ */
+export interface DeleteObjectCommandInput extends DeleteObjectRequest {}
+/**
+ * @public
+ */
+export interface DeleteObjectRequest {
+	/**
+	 * <p>The bucket name of the bucket containing the object. </p>
+	 *          <p>When using this action with an access point, you must direct requests to the access point hostname. The access point hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.s3-accesspoint.<i>Region</i>.amazonaws.com. When using this action with an access point through the Amazon Web Services SDKs, you provide the access point ARN in place of the bucket name. For more information about access point ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-access-points.html">Using access points</a> in the <i>Amazon S3 User Guide</i>.</p>
+	 *          <p>When you use this action with Amazon S3 on Outposts, you must direct requests to the S3 on Outposts hostname. The S3 on Outposts hostname takes the form <code>
+	 *                <i>AccessPointName</i>-<i>AccountId</i>.<i>outpostID</i>.s3-outposts.<i>Region</i>.amazonaws.com</code>. When you use this action with S3 on Outposts through the Amazon Web Services SDKs, you provide the Outposts access point ARN in place of the bucket name. For more information about S3 on Outposts ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/S3onOutposts.html">What is S3 on Outposts</a> in the <i>Amazon S3 User Guide</i>.</p>
+	 * <p>Note: To supply the Multi-region Access Point (MRAP) to Bucket, you need to install the "@aws-sdk/signature-v4-crt" package to your project dependencies.
+	 * For more information, please go to https://github.com/aws/aws-sdk-js-v3#known-issues</p>
+	 */
+	Bucket: string | undefined;
+	/**
+	 * <p>Key name of the object to delete.</p>
+	 */
+	Key: string | undefined;
+	/**
+	 * <p>The concatenation of the authentication device's serial number, a space, and the value
+	 *          that is displayed on your authentication device. Required to permanently delete a versioned
+	 *          object if versioning is configured with MFA delete enabled.</p>
+	 */
+	MFA?: string;
+	/**
+	 * <p>VersionId used to reference a specific version of the object.</p>
+	 */
+	VersionId?: string;
+	/**
+	 * <p>Confirms that the requester knows that they will be charged for the request. Bucket
+	 *          owners need not specify this parameter in their requests. For information about downloading
+	 *          objects from Requester Pays buckets, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html">Downloading Objects in
+	 *             Requester Pays Buckets</a> in the <i>Amazon S3 User Guide</i>.</p>
+	 */
+	RequestPayer?: RequestPayer | string;
+	/**
+	 * <p>Indicates whether S3 Object Lock should bypass Governance-mode restrictions to process
+	 *          this operation. To use this header, you must have the
+	 *             <code>s3:BypassGovernanceRetention</code> permission.</p>
+	 */
+	BypassGovernanceRetention?: boolean;
+	/**
+	 * <p>The account ID of the expected bucket owner. If the bucket is owned by a different account, the request fails with the HTTP status code <code>403 Forbidden</code> (access denied).</p>
+	 */
+	ExpectedBucketOwner?: string;
+}
+/**
+ * @public
+ *
  * The input for {@link GetObjectCommand}.
  */
 export interface GetObjectCommandInput extends GetObjectRequest {}
