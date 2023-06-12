@@ -29,3 +29,4 @@ export {
 	DeleteObjectInput,
 	DeleteObjectOutput,
 } from './deleteObject';
+export { CompletedPart, Part } from './types';

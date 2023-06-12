@@ -8,26 +8,22 @@ import {
 	Hub,
 	parseAWSExports,
 } from '@aws-amplify/core';
-import {
-	S3Client,
-	GetObjectCommand,
-	DeleteObjectCommand,
-	ListObjectsV2Command,
-	GetObjectCommandOutput,
-	DeleteObjectCommandInput,
-	CopyObjectCommandInput,
-	CopyObjectCommand,
-	GetObjectCommandInput,
-	ListObjectsV2Request,
-	HeadObjectCommand,
-} from '@aws-sdk/client-s3';
+// import {
+// 	S3Client,
+// 	GetObjectCommand,
+// 	DeleteObjectCommand,
+// 	ListObjectsV2Command,
+// 	GetObjectCommandOutput,
+// 	DeleteObjectCommandInput,
+// 	CopyObjectCommandInput,
+// 	CopyObjectCommand,
+// 	GetObjectCommandInput,
+// 	ListObjectsV2Request,
+// 	HeadObjectCommand,
+// } from '@aws-sdk/client-s3';
 import { formatUrl } from '@aws-sdk/util-format-url';
 import { createRequest } from '@aws-sdk/util-create-request';
 import { S3RequestPresigner } from '@aws-sdk/s3-request-presigner';
-// import {
-// 	SEND_DOWNLOAD_PROGRESS_EVENT,
-// 	SEND_UPLOAD_PROGRESS_EVENT,
-// } from './axios-http-handler';
 import { getObject, PutObjectInput } from '../AwsClients/S3';
 import {
 	SEND_DOWNLOAD_PROGRESS_EVENT,
@@ -68,7 +64,7 @@ import { AWSS3ProviderManagedUpload } from './AWSS3ProviderManagedUpload';
 import { AWSS3UploadTask, TaskEvents } from './AWSS3UploadTask';
 import { UPLOADS_STORAGE_KEY } from '../common/StorageConstants';
 import * as events from 'events';
-import { CancelTokenSource } from 'axios';
+// import { CancelTokenSource } from 'axios';
 
 const logger = new Logger('AWSS3Provider');
 
@@ -81,7 +77,7 @@ interface AddTaskInput {
 	bucket: string;
 	emitter: events.EventEmitter;
 	key: string;
-	s3Client: S3Client;
+	s3Options: S3Options;
 	params?: PutObjectInput;
 }
 
@@ -144,7 +140,7 @@ export class AWSS3Provider implements StorageProvider {
 		addTaskInput: AddTaskInput,
 		config: S3ProviderPutConfig & ResumableUploadConfig
 	): UploadTask {
-		const { s3Client, emitter, key, file, params } = addTaskInput;
+		const { s3Options, emitter, key, file, params } = addTaskInput;
 		const {
 			progressCallback,
 			completeCallback,
@@ -206,7 +202,7 @@ export class AWSS3Provider implements StorageProvider {
 		);
 
 		const task = new AWSS3UploadTask({
-			s3Client,
+			s3Options,
 			file,
 			emitter,
 			level: config.level,

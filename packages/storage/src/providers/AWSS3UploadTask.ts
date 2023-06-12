@@ -1,20 +1,19 @@
-import {
-	UploadPartCommandInput,
-	CompletedPart,
-	S3Client,
-	UploadPartCommand,
-	CompleteMultipartUploadCommand,
-	Part,
-	AbortMultipartUploadCommand,
-	ListPartsCommand,
-	ListObjectsV2Command,
-} from '@aws-sdk/client-s3';
 import * as events from 'events';
-import axios, { Canceler, CancelTokenSource } from 'axios';
-import { HttpHandlerOptions } from '@aws-sdk/types';
 import { Logger } from '@aws-amplify/core';
 import { UploadTask } from '../types/Provider';
-import { PutObjectInput, createMultipartUpload } from '../AwsClients/S3';
+import {
+	PutObjectInput,
+	createMultipartUpload,
+	uploadPart,
+	UploadPartInput,
+	listObjectsV2,
+	CompletedPart,
+	Part,
+	listParts,
+	completeMultipartUpload,
+	abortMultipartUpload,
+} from '../AwsClients/S3';
+import { isCancelError, CANCELED_ERROR_MESSAGE } from '../AwsClients/S3/utils';
 import {
 	calculatePartSize,
 	DEFAULT_PART_SIZE,
@@ -22,11 +21,8 @@ import {
 	MAX_OBJECT_SIZE,
 } from '../common/S3ClientUtils';
 import { byteLength, isFile } from '../common/StorageUtils';
-import { AWSS3ProviderUploadErrorStrings } from '../common/StorageErrorStrings';
-import {
-	SET_CONTENT_LENGTH_HEADER,
-	UPLOADS_STORAGE_KEY,
-} from '../common/StorageConstants';
+import { UPLOADS_STORAGE_KEY } from '../common/StorageConstants';
+import { S3HandlerOptions } from '../common/S3ClientUtils';
 import { StorageAccessLevel } from '..';
 
 const logger = new Logger('AWSS3UploadTask');
@@ -46,7 +42,7 @@ export enum TaskEvents {
 }
 
 export interface AWSS3UploadTaskParams {
-	s3Client: S3Client;
+	s3HandlerOptions: S3HandlerOptions;
 	file: Blob;
 	storage: Storage;
 	level: StorageAccessLevel;
@@ -56,9 +52,9 @@ export interface AWSS3UploadTaskParams {
 }
 
 export interface InProgressRequest {
-	uploadPartInput: UploadPartCommandInput;
+	uploadPartInput: UploadPartInput;
 	s3Request: Promise<any>;
-	cancel: Canceler;
+	abortController: AbortController;
 }
 
 export interface UploadTaskCompleteEvent {
@@ -93,7 +89,7 @@ export class AWSS3UploadTask implements UploadTask {
 	private readonly emitter: events.EventEmitter;
 	private readonly file: Blob;
 	private readonly queueSize = DEFAULT_QUEUE_SIZE;
-	private readonly s3client: S3Client;
+	private readonly s3HandlerOptions: S3HandlerOptions;
 	private readonly storage: Storage;
 	private readonly storageSync: Promise<any>;
 	private readonly fileId: string;
@@ -102,7 +98,7 @@ export class AWSS3UploadTask implements UploadTask {
 	private partSize: number = DEFAULT_PART_SIZE;
 	private inProgress: InProgressRequest[] = [];
 	private completedParts: CompletedPart[] = [];
-	private queued: UploadPartCommandInput[] = [];
+	private queued: UploadPartInput[] = [];
 	private bytesUploaded: number = 0;
 	private totalBytes: number = 0;
 	private uploadId: string;
@@ -110,7 +106,7 @@ export class AWSS3UploadTask implements UploadTask {
 	public state: AWSS3UploadTaskState = AWSS3UploadTaskState.INIT;
 
 	constructor({
-		s3Client,
+		s3HandlerOptions,
 		file,
 		emitter,
 		storage,
@@ -119,8 +115,7 @@ export class AWSS3UploadTask implements UploadTask {
 		prefixPromise,
 	}: AWSS3UploadTaskParams) {
 		this.prefixPromise = prefixPromise;
-		this.s3client = s3Client;
-		this.s3client.middlewareStack.remove(SET_CONTENT_LENGTH_HEADER);
+		this.s3HandlerOptions = s3HandlerOptions;
 		this.storage = storage;
 		this.storageSync = Promise.resolve();
 		if (typeof this.storage['sync'] === 'function') {
@@ -154,13 +149,10 @@ export class AWSS3UploadTask implements UploadTask {
 		key: string;
 		bucket: string;
 	}) {
-		const listObjectRes = await this.s3client.send(
-			new ListObjectsV2Command({
-				Bucket: bucket,
-				Prefix: key,
-			})
-		);
-		const { Contents = [] } = listObjectRes;
+		const { Contents = [] } = await listObjectsV2(this.s3HandlerOptions, {
+			Bucket: bucket,
+			Prefix: key,
+		});
 		const prefix = await this.prefixPromise;
 		const obj = Contents.find(o => o.Key === `${prefix}${key}`);
 		return obj;
@@ -206,16 +198,14 @@ export class AWSS3UploadTask implements UploadTask {
 		cachedUploadFileData.lastTouched = Date.now();
 		this.storage.setItem(UPLOADS_STORAGE_KEY, JSON.stringify(uploadRequests));
 
-		const listPartsOutput = await this.s3client.send(
-			new ListPartsCommand({
-				Bucket: this.params.Bucket,
-				Key: this.params.Key,
-				UploadId: cachedUploadFileData.uploadId,
-			})
-		);
+		const { Parts = [] } = await listParts(this.s3HandlerOptions, {
+			Bucket: this.params.Bucket,
+			Key: this.params.Key,
+			UploadId: cachedUploadFileData.uploadId,
+		});
 
 		return {
-			parts: listPartsOutput.Parts || [],
+			parts: Parts,
 			uploadId: cachedUploadFileData.uploadId,
 		};
 	}
@@ -266,7 +256,7 @@ export class AWSS3UploadTask implements UploadTask {
 	}: {
 		eTag: string;
 		partNumber: number;
-		chunk: UploadPartCommandInput['Body'];
+		chunk: UploadPartInput['Body'];
 	}) {
 		this.completedParts.push({
 			ETag: eTag,
@@ -288,17 +278,15 @@ export class AWSS3UploadTask implements UploadTask {
 
 	private async _completeUpload() {
 		try {
-			await this.s3client.send(
-				new CompleteMultipartUploadCommand({
-					Bucket: this.params.Bucket,
-					Key: this.params.Key,
-					UploadId: this.uploadId,
-					MultipartUpload: {
-						// Parts are not always completed in order, we need to manually sort them
-						Parts: this.completedParts.sort(comparePartNumber),
-					},
-				})
-			);
+			await completeMultipartUpload(this.s3HandlerOptions, {
+				Bucket: this.params.Bucket,
+				Key: this.params.Key,
+				UploadId: this.uploadId,
+				MultipartUpload: {
+					// Parts are not always completed in order, we need to manually sort them
+					Parts: this.completedParts.sort(comparePartNumber),
+				},
+			});
 			await this._verifyFileSize();
 			this._emitEvent<UploadTaskCompleteEvent>(TaskEvents.UPLOAD_COMPLETE, {
 				key: this.params.Key,
@@ -312,13 +300,17 @@ export class AWSS3UploadTask implements UploadTask {
 	}
 
 	private async _makeUploadPartRequest(
-		input: UploadPartCommandInput,
-		cancelTokenSource: CancelTokenSource
+		input: UploadPartInput,
+		abortSignal: AbortSignal
 	) {
 		try {
-			const res = await this.s3client.send(new UploadPartCommand(input), {
-				cancelTokenSource,
-			} as HttpHandlerOptions);
+			const res = await uploadPart(
+				{
+					...this.s3HandlerOptions,
+					abortSignal,
+				},
+				input
+			);
 			await this._onPartUploadCompletion({
 				eTag: res.ETag,
 				partNumber: input.PartNumber,
@@ -332,12 +324,10 @@ export class AWSS3UploadTask implements UploadTask {
 			} else {
 				logger.error('error starting next part of upload: ', err);
 			}
-			// axios' cancel will also throw an error, however we don't need to emit an event in that case as it's an
+			// xhr transfer handlers' cancel will also throw an error, however we don't need to emit an event in that case as it's an
 			// expected behavior
-			if (
-				!axios.isCancel(err) &&
-				err.message !== AWSS3ProviderUploadErrorStrings.UPLOAD_PAUSED_MESSAGE
-			) {
+			if (!isCancelError(err) && err.message !== CANCELED_ERROR_MESSAGE) {
+				// TODO: validate this
 				this._emitEvent(TaskEvents.ERROR, err);
 				this.pause();
 			}
@@ -346,12 +336,15 @@ export class AWSS3UploadTask implements UploadTask {
 
 	private _startNextPart() {
 		if (this.queued.length > 0 && this.state !== AWSS3UploadTaskState.PAUSED) {
-			const cancelTokenSource = axios.CancelToken.source();
+			const abortController = new AbortController();
 			const nextPart = this.queued.shift();
 			this.inProgress.push({
 				uploadPartInput: nextPart,
-				s3Request: this._makeUploadPartRequest(nextPart, cancelTokenSource),
-				cancel: cancelTokenSource.cancel,
+				s3Request: this._makeUploadPartRequest(
+					nextPart,
+					abortController.signal
+				),
+				abortController: abortController,
 			});
 		}
 	}
@@ -394,7 +387,7 @@ export class AWSS3UploadTask implements UploadTask {
 
 	private _createParts() {
 		const size = this.file.size;
-		const parts: UploadPartCommandInput[] = [];
+		const parts: UploadPartInput[] = [];
 		for (let bodyStart = 0; bodyStart < size; ) {
 			const bodyEnd = Math.min(bodyStart + this.partSize, size);
 			parts.push({
@@ -469,7 +462,8 @@ export class AWSS3UploadTask implements UploadTask {
 				}
 			}
 		} catch (err) {
-			if (!axios.isCancel(err)) {
+			// TODO: validate error handling
+			if (!isCancelError(err)) {
 				logger.error('Error initializing the upload task', err);
 				this._emitEvent(TaskEvents.ERROR, err);
 			}
@@ -513,13 +507,11 @@ export class AWSS3UploadTask implements UploadTask {
 			this.bytesUploaded = 0;
 			this.state = AWSS3UploadTaskState.CANCELLED;
 			try {
-				await this.s3client.send(
-					new AbortMultipartUploadCommand({
-						Bucket: this.params.Bucket,
-						Key: this.params.Key,
-						UploadId: this.uploadId,
-					})
-				);
+				await abortMultipartUpload(this.s3HandlerOptions, {
+					Bucket: this.params.Bucket,
+					Key: this.params.Key,
+					UploadId: this.uploadId,
+				});
 				await this._removeFromCache();
 				return true;
 			} catch (err) {
@@ -548,7 +540,7 @@ export class AWSS3UploadTask implements UploadTask {
 			this.inProgress.length
 		);
 		removedInProgressReq.forEach(req => {
-			req.cancel(AWSS3ProviderUploadErrorStrings.UPLOAD_PAUSED_MESSAGE);
+			req.abortController.abort();
 		});
 		// Put all removed in progress parts back into the queue
 		this.queued.unshift(

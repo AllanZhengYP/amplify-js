@@ -21,6 +21,12 @@ import {
 	SET_CONTENT_LENGTH_HEADER,
 } from './StorageConstants';
 
+export interface S3HandlerOptions {
+	credentials: ICredentials;
+	region: string;
+	useAccelerateEndpoint?: boolean;
+}
+
 const logger = new Logger('S3ClientUtils');
 // placeholder credentials in order to satisfy type requirement, always results in 403 when used
 const INVALID_CRED = { accessKeyId: '', secretAccessKey: '' };

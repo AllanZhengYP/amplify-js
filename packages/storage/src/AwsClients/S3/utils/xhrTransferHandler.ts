@@ -17,7 +17,7 @@ const NETWORK_ERROR_CODE = 'ECONNABORTED';
 const ABORT_ERROR_MESSAGE = 'Request aborted';
 const ABORT_ERROR_CODE = 'ERR_ABORTED';
 
-const CANCELED_ERROR_MESSAGE = 'canceled';
+export const CANCELED_ERROR_MESSAGE = 'canceled';
 const CANCELED_ERROR_CODE = 'ERR_CANCELED';
 
 const logger = new Logger('xhr-http-handler');
@@ -198,6 +198,9 @@ const simulateAxiosCanceledError = (
 	error['__CANCEL__'] = true;
 	return error;
 };
+
+export const isCancelError = (error: unknown): boolean =>
+	!!error?.['__CANCEL__'];
 
 /**
  * Convert xhr.getAllResponseHeaders() string to a Record<string, string>. Note that modern browser already returns

@@ -2,25 +2,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ConsoleLogger as Logger } from '@aws-amplify/core';
-import {
-	UploadPartCommand,
-	CompleteMultipartUploadCommand,
-	CompleteMultipartUploadCommandInput,
-	ListPartsCommand,
-	AbortMultipartUploadCommand,
-	CompletedPart,
-	S3Client,
-} from '@aws-sdk/client-s3';
+// import {
+// 	UploadPartCommand,
+// 	CompleteMultipartUploadCommand,
+// 	CompleteMultipartUploadCommandInput,
+// 	ListPartsCommand,
+// 	AbortMultipartUploadCommand,
+// 	CompletedPart,
+// 	S3Client,
+// } from '@aws-sdk/client-s3';
 import {
 	PutObjectInput,
 	putObject,
 	createMultipartUpload,
+	CompletedPart,
 } from '../AwsClients/S3';
-import {
-	SEND_UPLOAD_PROGRESS_EVENT,
-	SEND_DOWNLOAD_PROGRESS_EVENT,
-	AxiosHttpHandlerOptions,
-} from './axios-http-handler';
+// import {
+// 	SEND_UPLOAD_PROGRESS_EVENT,
+// 	SEND_DOWNLOAD_PROGRESS_EVENT,
+// 	AxiosHttpHandlerOptions,
+// } from './axios-http-handler';
 import * as events from 'events';
 import {
 	autoAdjustClockskewMiddleware,
@@ -32,6 +33,7 @@ import {
 	DEFAULT_PART_SIZE,
 	DEFAULT_QUEUE_SIZE,
 	MAX_OBJECT_SIZE,
+	S3HandlerOptions,
 } from '../common/S3ClientUtils';
 
 const logger = new Logger('AWSS3ProviderManagedUpload');
@@ -50,7 +52,7 @@ export class AWSS3ProviderManagedUpload {
 	private params: PutObjectInput;
 	private opts = null;
 	private completedParts: CompletedPart[] = [];
-	private s3client: S3Client;
+	private s3HandlerOptions: S3HandlerOptions;
 	private s3HandlerConfig: any; // TODO: type this
 	private uploadId: string | undefined;
 	private partSize = DEFAULT_PART_SIZE;
