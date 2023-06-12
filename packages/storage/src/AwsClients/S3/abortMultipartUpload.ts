@@ -41,9 +41,6 @@ const abortMultipartUploadDeserializer = async (
 	if (response.statusCode >= 300) {
 		const error = await parseXmlError(response);
 		throw error;
-	} else if (!response?.body) {
-		// S3 can return 200 without a body indicating failure.
-		throw new Error('S3 aborted request');
 	} else {
 		return {
 			$metadata: parseMetadata(response),

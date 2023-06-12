@@ -7,6 +7,7 @@ import {
 	completeMultipartUpload,
 	listParts,
 	abortMultipartUpload,
+	copyObject,
 } from '../../../src/AwsClients/S3';
 import { ApiFunctionalTestCase } from '../testUtils/types';
 
@@ -672,6 +673,51 @@ const abortMultipartUploadHappyCase: ApiFunctionalTestCase<
 	},
 ];
 
+const copyObjectHappyCase: ApiFunctionalTestCase<typeof copyObject> = [
+	'happy case',
+	'copyObject',
+	copyObject,
+	defaultConfig,
+	{
+		Bucket: 'bucket',
+		CopySource: 'sourceBucket/sourceKey', // TODO: test with encoded source key
+		Key: 'key',
+		CacheControl: 'cacheControl',
+		ContentType: 'contentType',
+		ACL: 'acl',
+		ServerSideEncryption: 'serverSideEncryption',
+		SSECustomerAlgorithm: 'sseCustomerAlgorithm',
+		SSECustomerKey: 'sseCustomerKey',
+		SSECustomerKeyMD5: 'sseCustomerKeyMD5',
+		SSEKMSKeyId: 'sseKMSKeyId',
+	},
+	expect.objectContaining({
+		url: expect.objectContaining({
+			href: 'https://bucket.s3.us-east-1.amazonaws.com/key',
+		}),
+		method: 'PUT',
+		headers: expect.objectContaining({
+			'x-amz-copy-source': 'sourceBucket/sourceKey',
+			'cache-control': 'cacheControl',
+			'content-type': 'contentType',
+			'x-amz-acl': 'acl',
+			'x-amz-server-side-encryption': 'serverSideEncryption',
+			'x-amz-server-side-encryption-customer-algorithm': 'sseCustomerAlgorithm',
+			'x-amz-server-side-encryption-customer-key': 'sseCustomerKey',
+			'x-amz-server-side-encryption-customer-key-md5': 'sseCustomerKeyMD5',
+			'x-amz-server-side-encryption-aws-kms-key-id': 'sseKMSKeyId',
+		}),
+	}),
+	{
+		status: 200,
+		headers: DEFAULT_RESPONSE_HEADERS,
+		body: '', // Skip body because it's not used for now.
+	},
+	{
+		$metadata: expect.objectContaining(expectedMetadata),
+	},
+];
+
 export default [
 	listObjectsV2HappyCase,
 	listObjectsV2ErrorCase,
@@ -684,4 +730,5 @@ export default [
 	completeMultipartUploadErrorCase,
 	listPartsHappyCase,
 	abortMultipartUploadHappyCase,
+	copyObjectHappyCase,
 ];

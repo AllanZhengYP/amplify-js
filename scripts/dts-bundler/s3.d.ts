@@ -15,6 +15,8 @@ import {
 	UploadPartCommandOutput,
 	ListPartsCommandInput,
 	ListPartsCommandOutput,
+	CopyObjectCommandInput,
+	CopyObjectCommandOutput,
 } from '@aws-sdk/client-s3';
 
 export {
@@ -34,4 +36,6 @@ export {
 	UploadPartCommandOutput,
 	ListPartsCommandInput,
 	ListPartsCommandOutput,
+	CopyObjectCommandInput,
+	CopyObjectCommandOutput,
 };
