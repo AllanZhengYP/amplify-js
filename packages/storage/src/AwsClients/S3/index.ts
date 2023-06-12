@@ -23,5 +23,5 @@ export {
 	AbortMultipartUploadOutput,
 } from './abortMultipartUpload';
 export { copyObject, CopyObjectInput, CopyObjectOutput } from './copyObject';
+export { headObject, HeadObjectInput, HeadObjectOutput } from './headObject';
 // export { deleteObject, DeleteObjectInput, DeleteObjectOutput } from './deleteObject';
-// export { headObject, HeadObjectInput, HeadObjectOutput } from './headObject';

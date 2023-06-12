@@ -8,6 +8,7 @@ import {
 	listParts,
 	abortMultipartUpload,
 	copyObject,
+	headObject,
 } from '../../../src/AwsClients/S3';
 import { ApiFunctionalTestCase } from '../testUtils/types';
 
@@ -562,6 +563,7 @@ const completeMultipartUploadHappyCase: ApiFunctionalTestCase<
 	},
 ];
 
+// API reference: https://docs.aws.amazon.com/AmazonS3/latest/API/API_CompleteMultipartUpload.html
 const completeMultipartUploadErrorCase: ApiFunctionalTestCase<
 	typeof completeMultipartUpload
 > = [
@@ -593,6 +595,7 @@ const completeMultipartUploadErrorCase: ApiFunctionalTestCase<
 	},
 ];
 
+//API Reference: https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListParts.html
 const listPartsHappyCase: ApiFunctionalTestCase<typeof listParts> = [
 	'happy case',
 	'listParts',
@@ -642,6 +645,7 @@ const listPartsHappyCase: ApiFunctionalTestCase<typeof listParts> = [
 	},
 ];
 
+// API Reference: https://docs.aws.amazon.com/AmazonS3/latest/API/API_AbortMultipartUpload.html
 const abortMultipartUploadHappyCase: ApiFunctionalTestCase<
 	typeof abortMultipartUpload
 > = [
@@ -673,6 +677,7 @@ const abortMultipartUploadHappyCase: ApiFunctionalTestCase<
 	},
 ];
 
+// API Reference: https://docs.aws.amazon.com/AmazonS3/latest/API/API_CopyObject.html
 const copyObjectHappyCase: ApiFunctionalTestCase<typeof copyObject> = [
 	'happy case',
 	'copyObject',
@@ -718,6 +723,40 @@ const copyObjectHappyCase: ApiFunctionalTestCase<typeof copyObject> = [
 	},
 ];
 
+// API Reference: https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html
+const headObjectHappyCase: ApiFunctionalTestCase<typeof headObject> = [
+	'happy case',
+	'headObject',
+	headObject,
+	defaultConfig,
+	{
+		Bucket: 'bucket',
+		Key: 'key',
+		SSECustomerAlgorithm: 'sseCustomerAlgorithm',
+		SSECustomerKey: 'sseCustomerKey',
+		SSECustomerKeyMD5: 'sseCustomerKeyMD5',
+	},
+	expect.objectContaining({
+		url: expect.objectContaining({
+			href: 'https://bucket.s3.us-east-1.amazonaws.com/key',
+		}),
+		method: 'HEAD',
+		headers: expect.objectContaining({
+			'x-amz-server-side-encryption-customer-algorithm': 'sseCustomerAlgorithm',
+			'x-amz-server-side-encryption-customer-key': 'sseCustomerKey',
+			'x-amz-server-side-encryption-customer-key-md5': 'sseCustomerKeyMD5',
+		}),
+	}),
+	{
+		status: 200,
+		headers: DEFAULT_RESPONSE_HEADERS,
+		body: '',
+	},
+	{
+		$metadata: expect.objectContaining(expectedMetadata),
+	},
+];
+
 export default [
 	listObjectsV2HappyCase,
 	listObjectsV2ErrorCase,
@@ -731,4 +770,5 @@ export default [
 	listPartsHappyCase,
 	abortMultipartUploadHappyCase,
 	copyObjectHappyCase,
+	headObjectHappyCase,
 ];

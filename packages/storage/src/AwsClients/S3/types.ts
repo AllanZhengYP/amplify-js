@@ -24,7 +24,10 @@ import {
 export type CompatibleHttpResponse = Omit<HttpResponse, 'body'> & {
 	body: ResponseBodyMixin & Blob;
 };
-
+declare const ArchiveStatus: {
+	readonly ARCHIVE_ACCESS: 'ARCHIVE_ACCESS';
+	readonly DEEP_ARCHIVE_ACCESS: 'DEEP_ARCHIVE_ACCESS';
+};
 declare const ChecksumAlgorithm: {
 	readonly CRC32: 'CRC32';
 	readonly CRC32C: 'CRC32C';
@@ -1352,6 +1355,340 @@ export interface GetObjectRequest {
 }
 /**
  * @public
+ *
+ * The input for {@link HeadObjectCommand}.
+ */
+export interface HeadObjectCommandInput extends HeadObjectRequest {}
+/**
+ * @public
+ *
+ * The output of {@link HeadObjectCommand}.
+ */
+export interface HeadObjectCommandOutput
+	extends HeadObjectOutput,
+		__MetadataBearer {}
+/**
+ * @public
+ */
+export interface HeadObjectOutput {
+	/**
+	 * <p>Specifies whether the object retrieved was (true) or was not (false) a Delete Marker. If
+	 *          false, this response header does not appear in the response.</p>
+	 */
+	DeleteMarker?: boolean;
+	/**
+	 * <p>Indicates that a range of bytes was specified.</p>
+	 */
+	AcceptRanges?: string;
+	/**
+	 * <p>If the object expiration is configured (see PUT Bucket lifecycle), the response includes
+	 *          this header. It includes the <code>expiry-date</code> and <code>rule-id</code> key-value
+	 *          pairs providing object expiration information. The value of the <code>rule-id</code> is
+	 *          URL-encoded.</p>
+	 */
+	Expiration?: string;
+	/**
+	 * <p>If the object is an archived object (an object whose storage class is GLACIER), the
+	 *          response includes this header if either the archive restoration is in progress (see <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_RestoreObject.html">RestoreObject</a> or an archive copy is already restored.</p>
+	 *          <p> If an archive copy is already restored, the header value indicates when Amazon S3 is
+	 *          scheduled to delete the object copy. For example:</p>
+	 *          <p>
+	 *             <code>x-amz-restore: ongoing-request="false", expiry-date="Fri, 21 Dec 2012 00:00:00
+	 *             GMT"</code>
+	 *          </p>
+	 *          <p>If the object restoration is in progress, the header returns the value
+	 *             <code>ongoing-request="true"</code>.</p>
+	 *          <p>For more information about archiving objects, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html#lifecycle-transition-general-considerations">Transitioning Objects: General Considerations</a>.</p>
+	 */
+	Restore?: string;
+	/**
+	 * <p>The archive state of the head object.</p>
+	 */
+	ArchiveStatus?: ArchiveStatus | string;
+	/**
+	 * <p>Creation date of the object.</p>
+	 */
+	LastModified?: Date;
+	/**
+	 * <p>Size of the body in bytes.</p>
+	 */
+	ContentLength?: number;
+	/**
+	 * <p>The base64-encoded, 32-bit CRC32 checksum of the object. This will only be present if it was uploaded
+	 *     with the object. With multipart uploads, this may not be a checksum value of the object. For more information about how checksums are calculated
+	 *     with multipart uploads, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html#large-object-checksums">
+	 *     Checking object integrity</a> in the <i>Amazon S3 User Guide</i>.</p>
+	 */
+	ChecksumCRC32?: string;
+	/**
+	 * <p>The base64-encoded, 32-bit CRC32C checksum of the object. This will only be present if it was uploaded
+	 *     with the object. With multipart uploads, this may not be a checksum value of the object. For more information about how checksums are calculated
+	 *     with multipart uploads, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html#large-object-checksums">
+	 *     Checking object integrity</a> in the <i>Amazon S3 User Guide</i>.</p>
+	 */
+	ChecksumCRC32C?: string;
+	/**
+	 * <p>The base64-encoded, 160-bit SHA-1 digest of the object. This will only be present if it was uploaded
+	 *     with the object. With multipart uploads, this may not be a checksum value of the object. For more information about how checksums are calculated
+	 *     with multipart uploads, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html#large-object-checksums">
+	 *     Checking object integrity</a> in the <i>Amazon S3 User Guide</i>.</p>
+	 */
+	ChecksumSHA1?: string;
+	/**
+	 * <p>The base64-encoded, 256-bit SHA-256 digest of the object. This will only be present if it was uploaded
+	 *     with the object. With multipart uploads, this may not be a checksum value of the object. For more information about how checksums are calculated
+	 *     with multipart uploads, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html#large-object-checksums">
+	 *     Checking object integrity</a> in the <i>Amazon S3 User Guide</i>.</p>
+	 */
+	ChecksumSHA256?: string;
+	/**
+	 * <p>An entity tag (ETag) is an opaque identifier assigned by a web server to a specific
+	 *          version of a resource found at a URL.</p>
+	 */
+	ETag?: string;
+	/**
+	 * <p>This is set to the number of metadata entries not returned in <code>x-amz-meta</code>
+	 *          headers. This can happen if you create metadata using an API like SOAP that supports more
+	 *          flexible metadata than the REST API. For example, using SOAP, you can create metadata whose
+	 *          values are not legal HTTP headers.</p>
+	 */
+	MissingMeta?: number;
+	/**
+	 * <p>Version of the object.</p>
+	 */
+	VersionId?: string;
+	/**
+	 * <p>Specifies caching behavior along the request/reply chain.</p>
+	 */
+	CacheControl?: string;
+	/**
+	 * <p>Specifies presentational information for the object.</p>
+	 */
+	ContentDisposition?: string;
+	/**
+	 * <p>Specifies what content encodings have been applied to the object and thus what decoding
+	 *          mechanisms must be applied to obtain the media-type referenced by the Content-Type header
+	 *          field.</p>
+	 */
+	ContentEncoding?: string;
+	/**
+	 * <p>The language the content is in.</p>
+	 */
+	ContentLanguage?: string;
+	/**
+	 * <p>A standard MIME type describing the format of the object data.</p>
+	 */
+	ContentType?: string;
+	/**
+	 * <p>The date and time at which the object is no longer cacheable.</p>
+	 */
+	Expires?: Date;
+	/**
+	 * <p>If the bucket is configured as a website, redirects requests for this object to another
+	 *          object in the same bucket or to an external URL. Amazon S3 stores the value of this header in
+	 *          the object metadata.</p>
+	 */
+	WebsiteRedirectLocation?: string;
+	/**
+	 * <p>The server-side encryption algorithm used when storing this object in Amazon S3 (for example,
+	 *          AES256, <code>aws:kms</code>).</p>
+	 */
+	ServerSideEncryption?: ServerSideEncryption | string;
+	/**
+	 * <p>A map of metadata to store with the object in S3.</p>
+	 */
+	Metadata?: Record<string, string>;
+	/**
+	 * <p>If server-side encryption with a customer-provided encryption key was requested, the
+	 *          response will include this header confirming the encryption algorithm used.</p>
+	 */
+	SSECustomerAlgorithm?: string;
+	/**
+	 * <p>If server-side encryption with a customer-provided encryption key was requested, the
+	 *          response will include this header to provide round-trip message integrity verification of
+	 *          the customer-provided encryption key.</p>
+	 */
+	SSECustomerKeyMD5?: string;
+	/**
+	 * <p>If present, specifies the ID of the Amazon Web Services Key Management Service (Amazon Web Services KMS) symmetric
+	 *          encryption customer managed key that was used for the object.</p>
+	 */
+	SSEKMSKeyId?: string;
+	/**
+	 * <p>Indicates whether the object uses an S3 Bucket Key for server-side encryption with Amazon Web Services
+	 *          KMS (SSE-KMS).</p>
+	 */
+	BucketKeyEnabled?: boolean;
+	/**
+	 * <p>Provides storage class information of the object. Amazon S3 returns this header for all
+	 *          objects except for S3 Standard storage class objects.</p>
+	 *          <p>For more information, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/storage-class-intro.html">Storage Classes</a>.</p>
+	 */
+	StorageClass?: StorageClass | string;
+	/**
+	 * <p>If present, indicates that the requester was successfully charged for the
+	 *          request.</p>
+	 */
+	RequestCharged?: RequestCharged | string;
+	/**
+	 * <p>Amazon S3 can return this header if your request involves a bucket that is either a source or
+	 *          a destination in a replication rule.</p>
+	 *          <p>In replication, you have a source bucket on which you configure replication and
+	 *          destination bucket or buckets where Amazon S3 stores object replicas. When you request an object
+	 *             (<code>GetObject</code>) or object metadata (<code>HeadObject</code>) from these
+	 *          buckets, Amazon S3 will return the <code>x-amz-replication-status</code> header in the response
+	 *          as follows:</p>
+	 *          <ul>
+	 *             <li>
+	 *                <p>
+	 *                   <b>If requesting an object from the source bucket</b>,
+	 *                Amazon S3 will return the <code>x-amz-replication-status</code> header if the object in
+	 *                your request is eligible for replication.</p>
+	 *                <p> For example, suppose that in your replication configuration, you specify object
+	 *                prefix <code>TaxDocs</code> requesting Amazon S3 to replicate objects with key prefix
+	 *                   <code>TaxDocs</code>. Any objects you upload with this key name prefix, for
+	 *                example <code>TaxDocs/document1.pdf</code>, are eligible for replication. For any
+	 *                object request with this key name prefix, Amazon S3 will return the
+	 *                   <code>x-amz-replication-status</code> header with value PENDING, COMPLETED or
+	 *                FAILED indicating object replication status.</p>
+	 *             </li>
+	 *             <li>
+	 *                <p>
+	 *                   <b>If requesting an object from a destination
+	 *                bucket</b>, Amazon S3 will return the <code>x-amz-replication-status</code> header
+	 *                with value REPLICA if the object in your request is a replica that Amazon S3 created and
+	 *                there is no replica modification replication in progress.</p>
+	 *             </li>
+	 *             <li>
+	 *                <p>
+	 *                   <b>When replicating objects to multiple destination
+	 *                   buckets</b>, the <code>x-amz-replication-status</code> header acts
+	 *                differently. The header of the source object will only return a value of COMPLETED
+	 *                when replication is successful to all destinations. The header will remain at value
+	 *                PENDING until replication has completed for all destinations. If one or more
+	 *                destinations fails replication the header will return FAILED. </p>
+	 *             </li>
+	 *          </ul>
+	 *          <p>For more information, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html">Replication</a>.</p>
+	 */
+	ReplicationStatus?: ReplicationStatus | string;
+	/**
+	 * <p>The count of parts this object has. This value is only returned if you specify
+	 *             <code>partNumber</code> in your request and the object was uploaded as a multipart
+	 *          upload.</p>
+	 */
+	PartsCount?: number;
+	/**
+	 * <p>The Object Lock mode, if any, that's in effect for this object. This header is only
+	 *          returned if the requester has the <code>s3:GetObjectRetention</code> permission. For more
+	 *          information about S3 Object Lock, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock.html">Object Lock</a>. </p>
+	 */
+	ObjectLockMode?: ObjectLockMode | string;
+	/**
+	 * <p>The date and time when the Object Lock retention period expires. This header is only
+	 *          returned if the requester has the <code>s3:GetObjectRetention</code> permission.</p>
+	 */
+	ObjectLockRetainUntilDate?: Date;
+	/**
+	 * <p>Specifies whether a legal hold is in effect for this object. This header is only
+	 *          returned if the requester has the <code>s3:GetObjectLegalHold</code> permission. This
+	 *          header is not returned if the specified version of this object has never had a legal hold
+	 *          applied. For more information about S3 Object Lock, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lock.html">Object Lock</a>.</p>
+	 */
+	ObjectLockLegalHoldStatus?: ObjectLockLegalHoldStatus | string;
+}
+/**
+ * @public
+ */
+export interface HeadObjectRequest {
+	/**
+	 * <p>The name of the bucket containing the object.</p>
+	 *          <p>When using this action with an access point, you must direct requests to the access point hostname. The access point hostname takes the form <i>AccessPointName</i>-<i>AccountId</i>.s3-accesspoint.<i>Region</i>.amazonaws.com. When using this action with an access point through the Amazon Web Services SDKs, you provide the access point ARN in place of the bucket name. For more information about access point ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-access-points.html">Using access points</a> in the <i>Amazon S3 User Guide</i>.</p>
+	 *          <p>When you use this action with Amazon S3 on Outposts, you must direct requests to the S3 on Outposts hostname. The S3 on Outposts hostname takes the form <code>
+	 *                <i>AccessPointName</i>-<i>AccountId</i>.<i>outpostID</i>.s3-outposts.<i>Region</i>.amazonaws.com</code>. When you use this action with S3 on Outposts through the Amazon Web Services SDKs, you provide the Outposts access point ARN in place of the bucket name. For more information about S3 on Outposts ARNs, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/S3onOutposts.html">What is S3 on Outposts</a> in the <i>Amazon S3 User Guide</i>.</p>
+	 * <p>Note: To supply the Multi-region Access Point (MRAP) to Bucket, you need to install the "@aws-sdk/signature-v4-crt" package to your project dependencies.
+	 * For more information, please go to https://github.com/aws/aws-sdk-js-v3#known-issues</p>
+	 */
+	Bucket: string | undefined;
+	/**
+	 * <p>Return the object only if its entity tag (ETag) is the same as the one specified;
+	 *          otherwise, return a 412 (precondition failed) error.</p>
+	 */
+	IfMatch?: string;
+	/**
+	 * <p>Return the object only if it has been modified since the specified time; otherwise,
+	 *          return a 304 (not modified) error.</p>
+	 */
+	IfModifiedSince?: Date;
+	/**
+	 * <p>Return the object only if its entity tag (ETag) is different from the one specified;
+	 *          otherwise, return a 304 (not modified) error.</p>
+	 */
+	IfNoneMatch?: string;
+	/**
+	 * <p>Return the object only if it has not been modified since the specified time; otherwise,
+	 *          return a 412 (precondition failed) error.</p>
+	 */
+	IfUnmodifiedSince?: Date;
+	/**
+	 * <p>The object key.</p>
+	 */
+	Key: string | undefined;
+	/**
+	 * <p>HeadObject returns only the metadata for an object. If the Range is satisfiable, only
+	 *          the <code>ContentLength</code> is affected in the response. If the Range is not
+	 *          satisfiable, S3 returns a <code>416 - Requested Range Not Satisfiable</code> error.</p>
+	 */
+	Range?: string;
+	/**
+	 * <p>VersionId used to reference a specific version of the object.</p>
+	 */
+	VersionId?: string;
+	/**
+	 * <p>Specifies the algorithm to use to when encrypting the object (for example,
+	 *          AES256).</p>
+	 */
+	SSECustomerAlgorithm?: string;
+	/**
+	 * <p>Specifies the customer-provided encryption key for Amazon S3 to use in encrypting data. This
+	 *          value is used to store the object and then it is discarded; Amazon S3 does not store the
+	 *          encryption key. The key must be appropriate for use with the algorithm specified in the
+	 *             <code>x-amz-server-side-encryption-customer-algorithm</code> header.</p>
+	 */
+	SSECustomerKey?: string;
+	/**
+	 * <p>Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321. Amazon S3 uses
+	 *          this header for a message integrity check to ensure that the encryption key was transmitted
+	 *          without error.</p>
+	 */
+	SSECustomerKeyMD5?: string;
+	/**
+	 * <p>Confirms that the requester knows that they will be charged for the request. Bucket
+	 *          owners need not specify this parameter in their requests. For information about downloading
+	 *          objects from Requester Pays buckets, see <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html">Downloading Objects in
+	 *             Requester Pays Buckets</a> in the <i>Amazon S3 User Guide</i>.</p>
+	 */
+	RequestPayer?: RequestPayer | string;
+	/**
+	 * <p>Part number of the object being read. This is a positive integer between 1 and 10,000.
+	 *          Effectively performs a 'ranged' HEAD request for the part specified. Useful querying about
+	 *          the size of the part and the number of parts in this object.</p>
+	 */
+	PartNumber?: number;
+	/**
+	 * <p>The account ID of the expected bucket owner. If the bucket is owned by a different account, the request fails with the HTTP status code <code>403 Forbidden</code> (access denied).</p>
+	 */
+	ExpectedBucketOwner?: string;
+	/**
+	 * <p>To retrieve the checksum, this parameter must be enabled.</p>
+	 *          <p>In addition, if you enable <code>ChecksumMode</code> and the object is encrypted with
+	 *          Amazon Web Services Key Management Service (Amazon Web Services KMS), you must have permission to use the
+	 *             <code>kms:Decrypt</code> action for the request to succeed.</p>
+	 */
+	ChecksumMode?: ChecksumMode | string;
+}
+/**
+ * @public
  * <p>Container element that identifies who initiated the multipart upload. </p>
  */
 export interface Initiator {
@@ -2365,6 +2702,10 @@ export interface _Object {
 	 */
 	Owner?: Owner;
 }
+/**
+ * @public
+ */
+export type ArchiveStatus = (typeof ArchiveStatus)[keyof typeof ArchiveStatus];
 /**
  * @public
  */
