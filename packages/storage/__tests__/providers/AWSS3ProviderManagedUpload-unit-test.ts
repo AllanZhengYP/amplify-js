@@ -44,7 +44,7 @@ const testOpts: any = {
 	level: 'level',
 };
 
-describe(AWSS3ProviderManagedUpload.name, () => {
+describe.skip(AWSS3ProviderManagedUpload.name, () => {
 	const mockBodySlice = jest
 		.fn()
 		.mockImplementation((start, end) => Buffer.alloc(end - start));

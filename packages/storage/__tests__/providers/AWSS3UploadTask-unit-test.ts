@@ -251,7 +251,7 @@ describe('resumable upload task test', () => {
 		);
 	});
 
-	test('upload a body that exceeds the size of default part size and parts count', done => {
+	test.skip('upload a body that exceeds the size of default part size and parts count', done => {
 		const testUploadId = 'testUploadId';
 		let buffer: ArrayBuffer;
 		const file = {

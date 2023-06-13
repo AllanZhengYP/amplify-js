@@ -431,7 +431,7 @@ export class AWSS3UploadTask implements UploadTask {
 	private async _initMultipartUpload() {
 		const res = await createMultipartUpload(
 			{
-				//TODO: fix this
+				// TODO: fix this
 				region: 'foo',
 				credentials: {
 					accessKeyId: 'key',
