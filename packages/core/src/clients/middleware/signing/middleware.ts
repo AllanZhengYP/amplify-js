@@ -16,7 +16,7 @@ import { getUpdatedSystemClockOffset } from './utils/getUpdatedSystemClockOffset
  * Configuration of the signing middleware
  */
 export interface SigningOptions {
-	credentials: Credentials;
+	credentials: Credentials | (() => Promise<Credentials>);
 	region: string;
 	service: string;
 }
@@ -34,7 +34,8 @@ export const signingMiddleware = ({
 		async function signingMiddleware(request: HttpRequest) {
 			currentSystemClockOffset = currentSystemClockOffset ?? 0;
 			const signRequestOptions = {
-				credentials,
+				credentials:
+					typeof credentials === 'function' ? await credentials() : credentials,
 				signingDate: getSkewCorrectedDate(currentSystemClockOffset),
 				signingRegion: region,
 				signingService: service,
