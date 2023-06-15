@@ -15,7 +15,12 @@ import { parseXmlError } from './utils';
  */
 const SERVICE_NAME = 's3';
 
-type S3EndpointResolverOptions = EndpointResolverOptions & {
+/**
+ * Options for endpoint resolver.
+ *
+ * @internal
+ */
+export type S3EndpointResolverOptions = EndpointResolverOptions & {
 	useAccelerateEndpoint?: boolean;
 };
 

@@ -1,4 +1,9 @@
-export { getObject, GetObjectInput, GetObjectOutput } from './getObject';
+export {
+	getObject,
+	GetObjectInput,
+	GetObjectOutput,
+	getGetObjectRequest,
+} from './getObject';
 export {
 	listObjectsV2,
 	ListObjectsV2Input,

@@ -22,7 +22,7 @@ import {
 } from '../common/S3ClientUtils';
 import { byteLength, isFile } from '../common/StorageUtils';
 import { UPLOADS_STORAGE_KEY } from '../common/StorageConstants';
-import { S3HandlerOptions } from '../common/S3ClientUtils';
+import { S3Config } from '../common/S3ClientUtils';
 import { StorageAccessLevel } from '..';
 
 const logger = new Logger('AWSS3UploadTask');
@@ -42,7 +42,7 @@ export enum TaskEvents {
 }
 
 export interface AWSS3UploadTaskParams {
-	s3HandlerOptions: S3HandlerOptions;
+	s3Config: S3Config;
 	file: Blob;
 	storage: Storage;
 	level: StorageAccessLevel;
@@ -89,7 +89,7 @@ export class AWSS3UploadTask implements UploadTask {
 	private readonly emitter: events.EventEmitter;
 	private readonly file: Blob;
 	private readonly queueSize = DEFAULT_QUEUE_SIZE;
-	private readonly s3HandlerOptions: S3HandlerOptions;
+	private readonly s3Config: S3Config;
 	private readonly storage: Storage;
 	private readonly storageSync: Promise<any>;
 	private readonly fileId: string;
@@ -106,7 +106,7 @@ export class AWSS3UploadTask implements UploadTask {
 	public state: AWSS3UploadTaskState = AWSS3UploadTaskState.INIT;
 
 	constructor({
-		s3HandlerOptions,
+		s3Config,
 		file,
 		emitter,
 		storage,
@@ -115,7 +115,7 @@ export class AWSS3UploadTask implements UploadTask {
 		prefixPromise,
 	}: AWSS3UploadTaskParams) {
 		this.prefixPromise = prefixPromise;
-		this.s3HandlerOptions = s3HandlerOptions;
+		this.s3Config = s3Config;
 		this.storage = storage;
 		this.storageSync = Promise.resolve();
 		if (typeof this.storage['sync'] === 'function') {
@@ -149,9 +149,9 @@ export class AWSS3UploadTask implements UploadTask {
 		key: string;
 		bucket: string;
 	}) {
-		const { Contents = [] } = await listObjectsV2(this.s3HandlerOptions, {
+		const { Contents = [] } = await listObjectsV2(this.s3Config, {
 			Bucket: bucket,
-			Prefix: key,
+			Prefix: key, // TODO: add prefix
 		});
 		const prefix = await this.prefixPromise;
 		const obj = Contents.find(o => o.Key === `${prefix}${key}`);
@@ -176,7 +176,7 @@ export class AWSS3UploadTask implements UploadTask {
 				this.file.type,
 				this.params.Bucket,
 				level,
-				this.params.Key,
+				this.params.Key, // TODO: add prefix
 			].join('-');
 		}
 	}
@@ -198,9 +198,9 @@ export class AWSS3UploadTask implements UploadTask {
 		cachedUploadFileData.lastTouched = Date.now();
 		this.storage.setItem(UPLOADS_STORAGE_KEY, JSON.stringify(uploadRequests));
 
-		const { Parts = [] } = await listParts(this.s3HandlerOptions, {
+		const { Parts = [] } = await listParts(this.s3Config, {
 			Bucket: this.params.Bucket,
-			Key: this.params.Key,
+			Key: this.params.Key, // TODO: add prefix
 			UploadId: cachedUploadFileData.uploadId,
 		});
 
@@ -278,9 +278,9 @@ export class AWSS3UploadTask implements UploadTask {
 
 	private async _completeUpload() {
 		try {
-			await completeMultipartUpload(this.s3HandlerOptions, {
+			await completeMultipartUpload(this.s3Config, {
 				Bucket: this.params.Bucket,
-				Key: this.params.Key,
+				Key: this.params.Key, // TODO: add prefix
 				UploadId: this.uploadId,
 				MultipartUpload: {
 					// Parts are not always completed in order, we need to manually sort them
@@ -306,7 +306,7 @@ export class AWSS3UploadTask implements UploadTask {
 		try {
 			const res = await uploadPart(
 				{
-					...this.s3HandlerOptions,
+					...this.s3Config,
 					abortSignal,
 				},
 				input
@@ -327,7 +327,6 @@ export class AWSS3UploadTask implements UploadTask {
 			// xhr transfer handlers' cancel will also throw an error, however we don't need to emit an event in that case as it's an
 			// expected behavior
 			if (!isCancelError(err) && err.message !== CANCELED_ERROR_MESSAGE) {
-				// TODO: validate this
 				this._emitEvent(TaskEvents.ERROR, err);
 				this.pause();
 			}
@@ -359,7 +358,7 @@ export class AWSS3UploadTask implements UploadTask {
 		let valid: boolean;
 		try {
 			const obj = await this._listSingleFile({
-				key: this.params.Key,
+				key: this.params.Key, // TODO: add prefix
 				bucket: this.params.Bucket,
 			});
 			valid = Boolean(obj && obj.Size === this.file.size);
@@ -392,7 +391,7 @@ export class AWSS3UploadTask implements UploadTask {
 			const bodyEnd = Math.min(bodyStart + this.partSize, size);
 			parts.push({
 				Body: this.file.slice(bodyStart, bodyEnd),
-				Key: this.params.Key,
+				Key: this.params.Key, // TODO: add prefix
 				Bucket: this.params.Bucket,
 				PartNumber: parts.length + 1,
 				UploadId: this.uploadId,
@@ -422,22 +421,12 @@ export class AWSS3UploadTask implements UploadTask {
 	}
 
 	private async _initMultipartUpload() {
-		const res = await createMultipartUpload(
-			{
-				// TODO: fix this
-				region: 'foo',
-				credentials: {
-					accessKeyId: 'key',
-					secretAccessKey: 'secret',
-				},
-			},
-			this.params
-		);
+		const res = await createMultipartUpload(this.s3Config, this.params);
 		this._cache({
 			uploadId: res.UploadId,
 			lastTouched: Date.now(),
 			bucket: this.params.Bucket,
-			key: this.params.Key,
+			key: this.params.Key, // TODO: add prefix
 			fileName: this.file instanceof File ? this.file.name : '',
 		});
 		return res.UploadId;
@@ -507,9 +496,9 @@ export class AWSS3UploadTask implements UploadTask {
 			this.bytesUploaded = 0;
 			this.state = AWSS3UploadTaskState.CANCELLED;
 			try {
-				await abortMultipartUpload(this.s3HandlerOptions, {
+				await abortMultipartUpload(this.s3Config, {
 					Bucket: this.params.Bucket,
-					Key: this.params.Key,
+					Key: this.params.Key, // TODO: add prefix
 					UploadId: this.uploadId,
 				});
 				await this._removeFromCache();
