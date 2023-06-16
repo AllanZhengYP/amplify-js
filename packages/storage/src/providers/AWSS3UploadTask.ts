@@ -149,11 +149,11 @@ export class AWSS3UploadTask implements UploadTask {
 		key: string;
 		bucket: string;
 	}) {
+		const prefix = await this.prefixPromise;
 		const { Contents = [] } = await listObjectsV2(this.s3Config, {
 			Bucket: bucket,
-			Prefix: key, // TODO: add prefix
+			Prefix: prefix + key,
 		});
-		const prefix = await this.prefixPromise;
 		const obj = Contents.find(o => o.Key === `${prefix}${key}`);
 		return obj;
 	}
@@ -176,7 +176,7 @@ export class AWSS3UploadTask implements UploadTask {
 				this.file.type,
 				this.params.Bucket,
 				level,
-				this.params.Key, // TODO: add prefix
+				this.params.Key,
 			].join('-');
 		}
 	}
@@ -200,7 +200,7 @@ export class AWSS3UploadTask implements UploadTask {
 
 		const { Parts = [] } = await listParts(this.s3Config, {
 			Bucket: this.params.Bucket,
-			Key: this.params.Key, // TODO: add prefix
+			Key: (await this.prefixPromise) + this.params.Key,
 			UploadId: cachedUploadFileData.uploadId,
 		});
 
@@ -280,7 +280,7 @@ export class AWSS3UploadTask implements UploadTask {
 		try {
 			await completeMultipartUpload(this.s3Config, {
 				Bucket: this.params.Bucket,
-				Key: this.params.Key, // TODO: add prefix
+				Key: (await this.prefixPromise) + this.params.Key,
 				UploadId: this.uploadId,
 				MultipartUpload: {
 					// Parts are not always completed in order, we need to manually sort them
@@ -309,7 +309,10 @@ export class AWSS3UploadTask implements UploadTask {
 					...this.s3Config,
 					abortSignal,
 				},
-				input
+				{
+					...input,
+					Key: (await this.prefixPromise) + this.params.Key,
+				}
 			);
 			await this._onPartUploadCompletion({
 				eTag: res.ETag,
@@ -358,7 +361,7 @@ export class AWSS3UploadTask implements UploadTask {
 		let valid: boolean;
 		try {
 			const obj = await this._listSingleFile({
-				key: this.params.Key, // TODO: add prefix
+				key: this.params.Key,
 				bucket: this.params.Bucket,
 			});
 			valid = Boolean(obj && obj.Size === this.file.size);
@@ -421,12 +424,15 @@ export class AWSS3UploadTask implements UploadTask {
 	}
 
 	private async _initMultipartUpload() {
-		const res = await createMultipartUpload(this.s3Config, this.params);
+		const res = await createMultipartUpload(this.s3Config, {
+			...this.params,
+			Key: (await this.prefixPromise) + this.params.Key,
+		});
 		this._cache({
 			uploadId: res.UploadId,
 			lastTouched: Date.now(),
 			bucket: this.params.Bucket,
-			key: this.params.Key, // TODO: add prefix
+			key: this.params.Key,
 			fileName: this.file instanceof File ? this.file.name : '',
 		});
 		return res.UploadId;
@@ -498,7 +504,7 @@ export class AWSS3UploadTask implements UploadTask {
 			try {
 				await abortMultipartUpload(this.s3Config, {
 					Bucket: this.params.Bucket,
-					Key: this.params.Key, // TODO: add prefix
+					Key: (await this.prefixPromise) + this.params.Key,
 					UploadId: this.uploadId,
 				});
 				await this._removeFromCache();

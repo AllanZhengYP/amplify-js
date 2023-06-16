@@ -25,6 +25,7 @@ import {
 	MAX_OBJECT_SIZE,
 	S3Config,
 	loadS3Config,
+	getPrefix,
 } from '../common/S3ClientUtils';
 
 const logger = new Logger('AWSS3ProviderManagedUpload');
@@ -46,13 +47,13 @@ export class AWSS3ProviderManagedUpload {
 	private s3Config: S3Config;
 	private uploadId: string | undefined;
 	private partSize = DEFAULT_PART_SIZE;
+	private prefixPromise: Promise<string> | null = null;
 
 	// Progress reporting
 	private bytesUploaded = 0;
 	private totalBytesToUpload = 0;
 	private emitter: EventEmitter | null = null;
 
-	// TODO: validate opts type as S3 persistent config
 	constructor(params: PutObjectInput, opts, emitter: EventEmitter) {
 		this.params = params;
 		this.opts = opts;
@@ -61,6 +62,9 @@ export class AWSS3ProviderManagedUpload {
 			...(opts ?? {}),
 			emitter,
 		});
+		this.prefixPromise = this.s3Config
+			.credentials()
+			.then(credentials => getPrefix({ ...opts, credentials }));
 	}
 
 	public async upload() {
@@ -70,7 +74,10 @@ export class AWSS3ProviderManagedUpload {
 			if (this.totalBytesToUpload <= DEFAULT_PART_SIZE) {
 				// Multipart upload is not required. Upload the sanitized body as is
 				this.params.Body = this.body;
-				return putObject(this.s3Config, this.params); // TODO: add prefix
+				return putObject(this.s3Config, {
+					...this.params,
+					Key: (await this.prefixPromise) + this.params.Key,
+				});
 			} else {
 				// Step 1: Determine appropriate part size.
 				this.partSize = calculatePartSize(this.totalBytesToUpload);
@@ -135,7 +142,10 @@ export class AWSS3ProviderManagedUpload {
 
 	private async createMultiPartUpload() {
 		try {
-			const response = await createMultipartUpload(this.s3Config, this.params); // TODO: add prefix
+			const response = await createMultipartUpload(this.s3Config, {
+				...this.params,
+				Key: (await this.prefixPromise) + this.params.Key,
+			});
 			logger.debug(response.UploadId);
 			return response.UploadId;
 		} catch (error) {
@@ -166,7 +176,7 @@ export class AWSS3ProviderManagedUpload {
 							PartNumber: part.partNumber,
 							Body: part.bodyPart,
 							UploadId: uploadId,
-							Key, // TODO: prefix this
+							Key: (await this.prefixPromise) + Key,
 							Bucket,
 							...(SSECustomerAlgorithm && { SSECustomerAlgorithm }),
 							...(SSECustomerKey && { SSECustomerKey }),
@@ -194,7 +204,7 @@ export class AWSS3ProviderManagedUpload {
 	private async finishMultiPartUpload(uploadId: string) {
 		const input: CompleteMultipartUploadInput = {
 			Bucket: this.params.Bucket,
-			Key: this.params.Key, // TODO: prefix this
+			Key: (await this.prefixPromise) + this.params.Key,
 			UploadId: uploadId,
 			MultipartUpload: { Parts: this.completedParts },
 		};
@@ -221,7 +231,7 @@ export class AWSS3ProviderManagedUpload {
 
 		const input = {
 			Bucket: this.params.Bucket,
-			Key: this.params.Key, // TODO: prefix this
+			Key: (await this.prefixPromise) + this.params.Key,
 			UploadId: uploadId,
 		};
 

@@ -1,3 +1,4 @@
+export { SERVICE_NAME } from './base';
 export {
 	getObject,
 	GetObjectInput,

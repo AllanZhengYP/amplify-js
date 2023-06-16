@@ -22,6 +22,7 @@ import {
 	deleteObject,
 	ListObjectsV2Input,
 	listObjectsV2,
+	SERVICE_NAME as S3_SERVICE_NAME,
 } from '../AwsClients/S3';
 import {
 	SEND_DOWNLOAD_PROGRESS_EVENT,
@@ -50,13 +51,7 @@ import {
 } from '../types';
 import { StorageErrorStrings } from '../common/StorageErrorStrings';
 import { dispatchStorageEvent } from '../common/StorageUtils';
-import {
-	createPrefixMiddleware,
-	prefixMiddlewareOptions,
-	getPrefix,
-	S3Config,
-	loadS3Config,
-} from '../common/S3ClientUtils';
+import { getPrefix, S3Config, loadS3Config } from '../common/S3ClientUtils';
 import { AWSS3ProviderManagedUpload } from './AWSS3ProviderManagedUpload';
 import { AWSS3UploadTask, TaskEvents } from './AWSS3UploadTask';
 import { UPLOADS_STORAGE_KEY } from '../common/StorageConstants';
@@ -379,7 +374,6 @@ export class AWSS3Provider implements StorageProvider {
 		const prefix = this._prefix(opt);
 		const final_key = prefix + key;
 		const emitter = new events.EventEmitter();
-		// const s3 = this._createNewS3Client(opt, emitter);
 		const s3Config = {
 			...loadS3Config(opt as any), // TODO: validate if opt has region
 			emitter,
@@ -473,7 +467,7 @@ export class AWSS3Provider implements StorageProvider {
 				expiration: expires || DEFAULT_PRESIGN_EXPIRATION,
 				credentials: await s3Config.credentials(),
 				signingRegion: s3Config.region,
-				signingService: 's3',
+				signingService: S3_SERVICE_NAME,
 			}).toString();
 			dispatchStorageEvent(
 				track,
@@ -578,17 +572,11 @@ export class AWSS3Provider implements StorageProvider {
 		}
 
 		if (resumable === true) {
-			const s3Client = this._createNewS3Client(opt);
-			// we are using aws sdk middleware to inject the prefix to key, this way we don't have to call
-			// this._ensureCredentials() which allows us to make this function sync so we can return non-Promise like UploadTask
-			s3Client.middlewareStack.add(
-				createPrefixMiddleware(opt, key),
-				prefixMiddlewareOptions
-			);
+			const s3Config = loadS3Config(opt as any); // TODO: validate opt type to include region.
 			const addTaskInput: AddTaskInput = {
 				bucket,
 				key,
-				s3Client,
+				s3Config,
 				file: object as Blob,
 				emitter,
 				accessLevel: level,
@@ -842,24 +830,4 @@ export class AWSS3Provider implements StorageProvider {
 				return publicPath;
 		}
 	}
-
-	// /**
-	//  * Creates an S3 client with new V3 aws sdk
-	//  */
-	// private _createNewS3Client(
-	// 	config: {
-	// 		region?: string;
-	// 		cancelTokenSource?: CancelTokenSource;
-	// 		dangerouslyConnectToHttpEndpointForTesting?: boolean;
-	// 		useAccelerateEndpoint?: boolean;
-	// 	},
-	// 	emitter?: events.EventEmitter
-	// ): S3Client {
-	// 	const s3client = createS3Client(config, emitter);
-	// 	s3client.middlewareStack.add(
-	// 		autoAdjustClockskewMiddleware(s3client.config),
-	// 		autoAdjustClockskewMiddlewareOptions
-	// 	);
-	// 	return s3client;
-	// }
 }

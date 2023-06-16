@@ -13,7 +13,7 @@ import { parseXmlError } from './utils';
 /**
  * The service name used to sign requests if the API requires authentication.
  */
-const SERVICE_NAME = 's3';
+export const SERVICE_NAME = 's3';
 
 /**
  * Options for endpoint resolver.
