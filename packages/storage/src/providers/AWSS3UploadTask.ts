@@ -19,10 +19,10 @@ import {
 	DEFAULT_PART_SIZE,
 	DEFAULT_QUEUE_SIZE,
 	MAX_OBJECT_SIZE,
+	S3Config,
 } from '../common/S3ClientUtils';
 import { byteLength, isFile } from '../common/StorageUtils';
 import { UPLOADS_STORAGE_KEY } from '../common/StorageConstants';
-import { S3Config } from '../common/S3ClientUtils';
 import { StorageAccessLevel } from '..';
 
 const logger = new Logger('AWSS3UploadTask');
@@ -346,7 +346,7 @@ export class AWSS3UploadTask implements UploadTask {
 					nextPart,
 					abortController.signal
 				),
-				abortController: abortController,
+				abortController,
 			});
 		}
 	}
