@@ -1,8 +1,8 @@
 import {
 	getPrefix,
-	createPrefixMiddleware,
-	autoAdjustClockskewMiddleware,
-	createS3Client,
+	// createPrefixMiddleware,
+	// autoAdjustClockskewMiddleware,
+	// createS3Client,
 	credentialsProvider,
 } from '../../src/common/S3ClientUtils';
 import {

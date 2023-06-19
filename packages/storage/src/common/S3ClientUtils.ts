@@ -1,5 +1,4 @@
 import { Credentials, ICredentials, Logger } from '@aws-amplify/core';
-import { InitializeMiddleware, InitializeHandlerOptions } from '@aws-sdk/types';
 import type { EventEmitter } from 'events';
 
 import { StorageAccessLevel, CustomPrefix } from '../types';
@@ -43,30 +42,6 @@ export const getPrefix = (config: {
 		default:
 			return publicPath;
 	}
-};
-
-export const createPrefixMiddleware =
-	(opt: Record<string, any>, key: string): InitializeMiddleware<any, any> =>
-	(next, _context) =>
-	async args => {
-		const credentials = await Credentials.get();
-		const cred = Credentials.shear(credentials);
-		const prefix = getPrefix({ ...opt, credentials: cred });
-		const clonedInput = Object.assign({}, args.input);
-		if (Object.prototype.hasOwnProperty.call(args.input, 'Key')) {
-			clonedInput.Key = prefix + key;
-			args.input = clonedInput;
-		} else if (Object.prototype.hasOwnProperty.call(args.input, 'Prefix')) {
-			clonedInput.Prefix = prefix + key;
-			args.input = clonedInput;
-		}
-		const result = next(args);
-		return result;
-	};
-
-export const prefixMiddlewareOptions: InitializeHandlerOptions = {
-	step: 'initialize',
-	name: 'addPrefixMiddleware',
 };
 
 export const credentialsProvider = async () => {
