@@ -1,8 +1,4 @@
-import {
-	AmplifyError,
-	ConsoleLogger as Logger,
-	ErrorParams,
-} from '@aws-amplify/core';
+import { AmplifyError, ErrorParams } from '@aws-amplify/core';
 
 export class StorageError extends AmplifyError {
 	constructor(params: ErrorParams) {
@@ -13,15 +9,3 @@ export class StorageError extends AmplifyError {
 		Object.setPrototypeOf(this, StorageError.prototype);
 	}
 }
-
-export enum StorageErrorTypes {
-	NO_CREDENTIALS = 'NO_CREDENTIALS',
-}
-
-const StorageErrorStrings: { [key in StorageErrorTypes]: ErrorParams } = {
-	[StorageErrorTypes.NO_CREDENTIALS]: {
-		name: 'NoCredentials',
-		message: 'No credentials',
-		recoverySuggestion: ``,
-	},
-};
