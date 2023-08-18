@@ -19,7 +19,7 @@ import {
 	AutoTrackEventOpts,
 	PersonalizeAnalyticsEvent,
 	KinesisAnalyticsEvent,
-} from './types';
+} from './types/index';
 import { PageViewTracker, EventTracker, SessionTracker } from './trackers';
 
 const logger = new Logger('AnalyticsClass');

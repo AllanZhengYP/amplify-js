@@ -1,9 +1,10 @@
 {
-  "extends": "../tsconfig.base.json",
-  "compilerOptions": {
-    "importHelpers": true,
-    "strict": false,
-    "noImplicitAny": false
-  },
-  "include": ["./src"],
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"importHelpers": true,
+		"strict": false,
+		"noImplicitAny": false,
+		"moduleResolution": "node16"
+	},
+	"include": ["./src"]
 }
