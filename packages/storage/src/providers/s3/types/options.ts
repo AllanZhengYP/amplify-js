@@ -4,7 +4,7 @@
 // TODO(ashwinkumar6) this uses V5 Credentials, update to V6.
 import { Credentials } from '@aws-sdk/types';
 
-import { TransferProgressEvent } from '../../../types';
+import { TransferProgressListener } from '../../../types';
 import { StorageOptions } from '../../../types/options';
 
 /**
@@ -25,7 +25,7 @@ export type S3TransferOptions = S3Options & {
 	/**
 	 * Callback function tracking the upload/download progress.
 	 */
-	onProgress?: (event: TransferProgressEvent) => void;
+	onProgress?: TransferProgressListener;
 };
 
 export type S3GetUrlOptions = S3Options & {

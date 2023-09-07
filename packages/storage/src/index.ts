@@ -10,6 +10,7 @@ export {
 	copy,
 	getUrl,
 } from './providers/s3';
+export { TransferProgressListener, TransferTaskState } from './types';
 // TODO[AllanZhengYP]: support isCancelError in Node.js with node-fetch
 export { isCancelError } from './errors/CanceledError';
 export { StorageError } from './errors/StorageError';

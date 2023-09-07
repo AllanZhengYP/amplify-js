@@ -14,6 +14,8 @@ export type TransferProgressEvent = {
 	totalBytes?: number;
 };
 
+export type TransferProgressListener = (event: TransferProgressEvent) => void;
+
 export type TransferTask<Result> = {
 	/**
 	 * Cancel an ongoing transfer(upload/download) task. This will reject the `result` promise with an `AbortError` by

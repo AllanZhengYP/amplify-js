@@ -5,7 +5,6 @@ import {
 	StorageDownloadDataResult,
 	StorageGetUrlResult,
 	StorageItem,
-	StorageUploadResult,
 	StorageListResult,
 } from '../../../types';
 
