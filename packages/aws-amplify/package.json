@@ -161,7 +161,7 @@
 		"tslib": "^2.5.0"
 	},
 	"devDependencies": {
-		"typescript": "5.0.2"
+		"typescript": "~5.2.0"
 	},
 	"size-limit": [
 		{
