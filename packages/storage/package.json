@@ -13,7 +13,7 @@
 		"access": "public"
 	},
 	"scripts": {
-		"test": "npm run lint && jest -w 1 --coverage",
+		"test": "jest -w 1 --coverage",
 		"build-with-test": "npm test && npm run build",
 		"build:cjs": "rimraf lib && tsc -m commonjs --outDir lib && webpack && webpack --config ./webpack.config.dev.js",
 		"build:esm": "rimraf lib-esm && tsc -m esnext --outDir lib-esm",
@@ -105,60 +105,5 @@
 		"@aws-amplify/core": "6.0.0",
 		"@types/sinon": "^7.5.1",
 		"typescript": "~5.2.0"
-	},
-	"jest": {
-		"globals": {
-			"ts-jest": {
-				"diagnostics": {
-					"pathRegex": "(/__tests__/.*|\\.(test|spec))\\.(tsx?|jsx?)$"
-				},
-				"tsConfig": {
-					"downlevelIteration": true,
-					"allowJs": true,
-					"types": ["@types/jest"],
-					"outDir": "./tsconfig.json",
-					"noEmitOnError": false,
-					"noImplicitAny": false,
-					"skipLibCheck": true
-				}
-			}
-		},
-		"transform": {
-			"^.+\\.(js|jsx|ts|tsx)$": "ts-jest"
-		},
-		"testRegex": "(/__tests__/.*|\\.test|spec)\\.(tsx?|jsx?)$",
-		"testPathIgnorePatterns": [
-			"xmlParser-fixture.ts",
-			"testUtils",
-			"cases"
-		],
-		"modulePathIgnorePatterns": [
-			"dist",
-			"lib",
-			"lib-esm"
-		],
-		"moduleFileExtensions": [
-			"ts",
-			"tsx",
-			"js",
-			"json",
-			"jsx"
-		],
-		"testEnvironment": "jsdom",
-		"testURL": "http://localhost/",
-		"coverageThreshold": {
-			"global": {
-				"branches": 0,
-				"functions": 0,
-				"lines": 0,
-				"statements": 0
-			}
-		},
-		"coveragePathIgnorePatterns": [
-			"/node_modules/",
-			"dist",
-			"lib",
-			"lib-esm"
-		]
 	}
 }

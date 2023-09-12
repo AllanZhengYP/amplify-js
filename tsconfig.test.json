@@ -1,0 +1,9 @@
+{
+	"extends": "./packages/tsconfig.base.json",
+	"compilerOptions": {
+		"types": ["jest", "node"],
+		// TODO: update unit test to allow stricter type checks in the unit tests.
+		"noEmitOnError": false,
+		"allowJs": true
+	}
+}
