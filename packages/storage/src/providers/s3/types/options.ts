@@ -5,12 +5,20 @@
 import { Credentials } from '@aws-sdk/types';
 
 import { TransferProgressEvent } from '../../../types';
-import { StorageOptions } from '../../../types/options';
+import { StorageOptions, StorageReadOptions } from '../../../types/options';
 
 /**
  * Request options type for S3 Storage operations.
  */
-export type S3Options = StorageOptions & {
+type S3Options = StorageOptions & {
+	/**
+	 * Whether to use accelerate endpoint.
+	 * @default false
+	 */
+	useAccelerateEndpoint?: boolean;
+};
+
+type S3ReadOptions = StorageReadOptions & {
 	/**
 	 * Whether to use accelerate endpoint.
 	 * @default false
@@ -19,29 +27,23 @@ export type S3Options = StorageOptions & {
 };
 
 /**
- * Request options type for S3 downloadData, uploadData APIs.
+ * Request options type for S3 downloadData APIs.
  */
-export type S3TransferOptions = S3Options & {
+export type S3DownloadDataOptions = S3ReadOptions & {
 	/**
 	 * Callback function tracking the upload/download progress.
 	 */
 	onProgress?: (event: TransferProgressEvent) => void;
 };
 
-export type S3GetUrlOptions = S3Options & {
+/**
+ * Request options type for S3 uploadData APIs.
+ */
+export type S3UploadDataOptions = S3Options & {
 	/**
-	 * Whether to head object to make sure the object existence before downloading.
-	 * @default false
+	 * Callback function tracking the upload/download progress.
 	 */
-	validateObjectExistence?: boolean;
-	/**
-	 * Number of seconds till the URL expires.
-	 * @default 900 (15 minutes)
-	 */
-	expiresIn?: number;
-};
-
-export type S3UploadOptions = Omit<S3TransferOptions, 'targetIdentityId'> & {
+	onProgress?: (event: TransferProgressEvent) => void;
 	/**
 	 * The default content-disposition header value of the file when downloading it.
 	 * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
@@ -62,6 +64,19 @@ export type S3UploadOptions = Omit<S3TransferOptions, 'targetIdentityId'> & {
 	 * @see https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingMetadata.html#UserMetadata
 	 */
 	metadata?: Record<string, string>;
+};
+
+export type S3GetUrlOptions = S3ReadOptions & {
+	/**
+	 * Whether to head object to make sure the object existence before downloading.
+	 * @default false
+	 */
+	validateObjectExistence?: boolean;
+	/**
+	 * Number of seconds till the URL expires.
+	 * @default 900 (15 minutes)
+	 */
+	expiresIn?: number;
 };
 
 /**

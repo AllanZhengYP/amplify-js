@@ -3,6 +3,7 @@
 
 import {
 	StorageOptions,
+	StorageReadOptions,
 	StorageUploadSourceOptions,
 	StorageListAllOptions,
 	StorageListPaginateOptions,
@@ -22,7 +23,7 @@ export type StorageListRequest<
 	options?: Options;
 };
 
-export type StorageDownloadDataRequest<Options extends StorageOptions> =
+export type StorageDownloadDataRequest<Options extends StorageReadOptions> =
 	StorageOperationRequest<Options>;
 
 export type StorageUploadDataRequest<Options extends StorageOptions> =

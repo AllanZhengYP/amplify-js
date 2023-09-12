@@ -4,7 +4,7 @@
 import { Amplify, StorageAccessLevel } from '@aws-amplify/core';
 
 import { getDataChunker } from './getDataChunker';
-import { S3UploadOptions } from '../../../types';
+import { S3UploadDataOptions } from '../../../types';
 import { resolveS3ConfigAndInput } from '../../../utils';
 import { StorageUploadDataRequest } from '../../../../../types';
 import { S3Item } from '../../../types/results';
@@ -37,7 +37,7 @@ export const getMultipartUploadHandlers = (
 		options: uploadDataOptions,
 		key,
 		data,
-	}: StorageUploadDataRequest<S3UploadOptions>,
+	}: StorageUploadDataRequest<S3UploadDataOptions>,
 	size?: number
 ) => {
 	let resolveCallback: ((value: S3Item) => void) | undefined;

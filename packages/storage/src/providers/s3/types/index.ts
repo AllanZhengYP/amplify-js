@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export {
-	S3Options,
-	S3TransferOptions,
 	S3GetUrlOptions,
-	S3UploadOptions,
+	S3DownloadDataOptions,
+	S3UploadDataOptions,
+	ResolvedS3Config,
 } from './options';
 export {
 	S3DownloadDataResult,
