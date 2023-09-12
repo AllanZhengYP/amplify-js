@@ -6,7 +6,6 @@ import {
 } from '../../src/Cache/BrowserStorageCache';
 
 const config: CacheConfig = {
-	keyPrefix: defaultConfig.keyPrefix,
 	capacityInBytes: 3000,
 	itemMaxSize: 800,
 	defaultTTL: 3000000,
@@ -151,12 +150,12 @@ describe('BrowserStorageCache', () => {
 			const val2: string = 'cbaabc';
 
 			cache.setItem(key, val1);
-			const cacheSizeBefore = cache.getCacheCurSize() as number;
+			const cacheSizeBefore: number = cache.getCacheCurSize();
 			const ret1 = cache.getItem(key);
 			expect(ret1).toBe(val1);
 
 			cache.setItem(key, val2);
-			const cacheSizeAfter = cache.getCacheCurSize() as number;
+			const cacheSizeAfter: number = cache.getCacheCurSize();
 			const ret2 = cache.getItem(key);
 			expect(ret2).toBe(val2);
 
@@ -437,9 +436,9 @@ describe('BrowserStorageCache', () => {
 
 	describe('createInstance', () => {
 		test('happy case, return new instance', () => {
-			expect(
-				cache.createInstance({ ...defaultConfig, keyPrefix: 'abc' })
-			).toBeInstanceOf(BrowserStorageCacheClass);
+			expect(cache.createInstance({ keyPrefix: 'abc' })).toBeInstanceOf(
+				BrowserStorageCacheClass
+			);
 		});
 	});
 });
