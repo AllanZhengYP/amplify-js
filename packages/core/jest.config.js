@@ -6,14 +6,12 @@ module.exports = {
 		'^.+\\.(js|jsx|ts|tsx)$': [
 			'ts-jest',
 			{
+				diagnostics: false,
 				tsconfig: {
 					types: ['jest', 'node'],
 					// TODO: update unit test to allow stricter type checks in the unit tests.
 					noEmitOnError: false,
-					noImplicitAny: false,
-					skipLibCheck: true,
 					allowJs: true,
-					strict: false,
 				},
 			},
 		],

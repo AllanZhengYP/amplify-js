@@ -28,7 +28,7 @@ describe('DateUtils', () => {
 			DateUtils.setClockOffset(1000);
 		});
 
-		describe('getDateWithClockOffset()', () => {
+		it('getDateWithClockOffset()', () => {
 			expect(DateUtils.getDateWithClockOffset()).toEqual(
 				new Date(new Date().getTime() + 1000)
 			);
