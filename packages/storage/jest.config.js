@@ -2,5 +2,5 @@ const baseJestConfig = require('../../jest.config.base');
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
 	...baseJestConfig,
-	setupFiles: ['./__mocks__/SessionStorage.js', './__mocks__/LocalStorage.js'],
+	testPathIgnorePatterns: ['xmlParser-fixture.ts', 'testUtils', 'cases'],
 };
