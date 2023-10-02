@@ -21,7 +21,10 @@ import {
 	GraphQLOperation,
 	GraphQLOptions,
 } from '../types';
-import { isCancelError as isCancelErrorREST } from '@aws-amplify/api-rest';
+import {
+	isCancelError as isCancelErrorREST,
+	DocumentType,
+} from '@aws-amplify/api-rest';
 import { post, cancel as cancelREST } from '@aws-amplify/api-rest/internals';
 import { AWSAppSyncRealTimeProvider } from '../Providers/AWSAppSyncRealTimeProvider';
 
@@ -208,100 +211,98 @@ export class InternalGraphQLAPIClass {
 		}
 	}
 
-	private async _graphql<T = any>(
+	private _graphql<T = any>(
 		{ query, variables, authMode }: GraphQLOptions,
 		additionalHeaders = {},
 		customUserAgentDetails?: CustomUserAgentDetails
 	): Promise<GraphQLResult<T>> {
-		const config = Amplify.getConfig();
+		const result = new Promise<GraphQLResult<T>>(async (resolve, reject) => {
+			const config = Amplify.getConfig();
 
-		const { region: region, endpoint: appSyncGraphqlEndpoint } =
-			config.API.AppSync;
+			const { region: region, endpoint: appSyncGraphqlEndpoint } =
+				config.API.AppSync;
 
-		const customGraphqlEndpoint = null;
-		const customEndpointRegion = null;
+			const customGraphqlEndpoint = null;
+			const customEndpointRegion = null;
 
-		const headers = {
-			...(!customGraphqlEndpoint &&
-				(await this._headerBasedAuth(
-					authMode,
-					additionalHeaders,
-					customUserAgentDetails
-				))),
-			...(customGraphqlEndpoint &&
-				(customEndpointRegion
-					? await this._headerBasedAuth(
-							authMode,
-							additionalHeaders,
-							customUserAgentDetails
-					  )
-					: { Authorization: null })),
-			...additionalHeaders,
-			...(!customGraphqlEndpoint && {
-				[USER_AGENT_HEADER]: getAmplifyUserAgent(customUserAgentDetails),
-			}),
-		};
-
-		const body = {
-			query: print(query as DocumentNode),
-			variables,
-		};
-
-		const endpoint = customGraphqlEndpoint || appSyncGraphqlEndpoint;
-
-		if (!endpoint) {
-			const error = new GraphQLError('No graphql endpoint provided.');
-
-			throw {
-				data: {},
-				errors: [error],
+			const headers = {
+				...(!customGraphqlEndpoint &&
+					(await this._headerBasedAuth(
+						authMode,
+						additionalHeaders,
+						customUserAgentDetails
+					))),
+				...(customGraphqlEndpoint &&
+					(customEndpointRegion
+						? await this._headerBasedAuth(
+								authMode,
+								additionalHeaders,
+								customUserAgentDetails
+						  )
+						: { Authorization: null })),
+				...additionalHeaders,
+				...(!customGraphqlEndpoint && {
+					[USER_AGENT_HEADER]: getAmplifyUserAgent(customUserAgentDetails),
+				}),
 			};
-		}
 
-		let response;
-		try {
-			const postPromise = this._api.post({
-				url: new URL(endpoint),
-				options: {
-					headers,
-					body,
-					signingServiceInfo: {
-						service: 'appsync',
-						region,
+			const body = {
+				query: print(query as DocumentNode),
+				variables,
+			};
+
+			const endpoint = customGraphqlEndpoint || appSyncGraphqlEndpoint;
+
+			if (!endpoint) {
+				const error = new GraphQLError('No graphql endpoint provided.');
+
+				throw {
+					data: {},
+					errors: [error],
+				};
+			}
+
+			let response;
+			try {
+				const postPromise = this._api.post({
+					url: new URL(endpoint),
+					options: {
+						headers,
+						body,
+						signingServiceInfo: {
+							service: 'appsync',
+							region,
+						},
 					},
-				},
-			});
-
-			const result = new Promise(async (res, rej) => {
+				});
+				this._cancelTokenMap.set(result, postPromise);
 				const { body: responsePayload } = await postPromise;
 				const postResult = await responsePayload.json();
-				res({ data: postResult });
-			});
 
-			this._cancelTokenMap.set(result, postPromise);
+				response = { data: postResult };
+			} catch (err) {
+				// If the exception is because user intentionally
+				// cancelled the request, do not modify the exception
+				// so that clients can identify the exception correctly.
 
-			response = result;
-		} catch (err) {
-			// If the exception is because user intentionally
-			// cancelled the request, do not modify the exception
-			// so that clients can identify the exception correctly.
-
-			if (isCancelErrorREST(err)) {
-				throw err;
+				if (isCancelErrorREST(err)) {
+					reject(err);
+				}
+				response = {
+					data: {},
+					errors: [new GraphQLError(err.message, null, null, null, null, err)],
+				};
 			}
-			response = {
-				data: {},
-				errors: [new GraphQLError(err.message, null, null, null, null, err)],
-			};
-		}
 
-		const { errors } = response;
+			const { errors } = response;
 
-		if (errors && errors.length) {
-			throw response;
-		}
+			if (errors && errors.length) {
+				reject(response);
+			}
 
-		return response;
+			resolve(response);
+		});
+		return result;
 	}
 
 	/**
