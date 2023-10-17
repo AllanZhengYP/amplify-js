@@ -1,13 +1,13 @@
 let mockRestPost;
+let serviceError;
 jest.mock('@aws-amplify/api-rest/internals', () => {
-	const whatisthis = jest.requireActual('@aws-amplify/api-rest/internals');
 	mockRestPost = jest.fn(() => {
 		debugger;
-		return Promise.reject(axiosError);
+		return Promise.reject(serviceError);
 	});
 
 	return {
-		...whatisthis,
+		...jest.requireActual('@aws-amplify/api-rest/internals'),
 		post: mockRestPost,
 	};
 });
