@@ -17,7 +17,6 @@
 				"named": "never"
 			}
 		],
-		"no-parameter-reassignment": true,
 		"align": [true, "parameters"],
 		"no-duplicate-imports": true,
 		"one-variable-per-declaration": [false, "ignore-for-loop"],

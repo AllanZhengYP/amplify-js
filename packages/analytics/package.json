@@ -102,7 +102,9 @@
 			"jsx"
 		],
 		"testEnvironment": "jsdom",
-		"testURL": "http://localhost/",
+		"testEnvironmentOptions": {
+			"url": "http://localhost/"
+		},
 		"coverageThreshold": {
 			"global": {
 				"branches": 0,
