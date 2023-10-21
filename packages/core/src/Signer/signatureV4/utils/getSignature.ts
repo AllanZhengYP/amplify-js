@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { HttpRequest } from '../../../../../types';
+import { HttpRequest } from '../../../clients/types';
 import { SigningValues } from '../types/signer';
 import { getHashedDataAsHex } from './dataHashHelpers';
 import { getCanonicalRequest } from './getCanonicalRequest';

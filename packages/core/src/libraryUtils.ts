@@ -32,7 +32,7 @@ export {
 } from './singleton/Auth/utils';
 export { isTokenExpired } from './singleton/Auth';
 export { GraphQLAuthMode, DocumentType } from './singleton/API/types';
-export { Signer } from './Signer';
+export { presignUrl, PresignUrlOptions } from './signer/signatureV4';
 export {
 	JWT,
 	StrictUnion,

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SourceData } from '@aws-sdk/types';
-import { HttpRequest } from '../../../../../types';
+import { HttpRequest } from '../../../clients/types';
 import { EMPTY_HASH, UNSIGNED_PAYLOAD } from '../constants';
 import { getHashedDataAsHex } from './dataHashHelpers';
 

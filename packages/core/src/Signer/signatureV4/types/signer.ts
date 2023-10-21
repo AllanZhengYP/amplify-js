@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Credentials, HttpRequest } from '../../../../../types';
+import { Credentials, HttpRequest } from '../../../clients/types';
 
 export interface SignRequestOptions {
 	credentials: Credentials;
@@ -21,6 +21,11 @@ export interface SignRequestOptions {
 }
 
 export interface PresignUrlOptions extends SignRequestOptions {
+	/**
+	 * The number of seconds until the presigned url expires.
+	 *
+	 * @default 900 (15 minutes)
+	 */
 	expiration?: number;
 }
 

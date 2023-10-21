@@ -15,7 +15,8 @@ import {
 } from './constants';
 import { getSigningValues } from './utils/getSigningValues';
 import { getSignature } from './utils/getSignature';
-import { AmplifyUrl } from '../../../../../utils/amplifyUrl';
+import { AmplifyUrl } from '../../utils/amplifyUrl';
+import { DateUtils } from '../DateUtils';
 
 /**
  * Given a `Presignable` object, returns a Signature Version 4 presigned `URL` object.
@@ -26,7 +27,11 @@ import { AmplifyUrl } from '../../../../../utils/amplifyUrl';
  */
 export const presignUrl = (
 	{ body, method = 'GET', url }: Presignable,
-	{ expiration, ...options }: PresignUrlOptions
+	{
+		expiration,
+		signingDate = DateUtils.getDateWithClockOffset(),
+		...options
+	}: PresignUrlOptions
 ): URL => {
 	const signingValues = getSigningValues(options);
 	const { accessKeyId, credentialScope, longDate, sessionToken } =

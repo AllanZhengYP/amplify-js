@@ -6,7 +6,7 @@ import {
 	presignUrl,
 	signRequest,
 	TOKEN_QUERY_PARAM,
-} from '../clients/middleware/signing/signer/signatureV4';
+} from '../signer/signatureV4';
 import { AmplifyUrl } from '../utils/amplifyUrl';
 
 const IOT_SERVICE_NAME = 'iotdevicegateway';

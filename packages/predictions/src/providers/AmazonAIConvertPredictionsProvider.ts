@@ -9,8 +9,9 @@ import {
 	AWSCredentials,
 	Category,
 	PredictionsAction,
-	Signer,
+	presignUrl,
 	getAmplifyUserAgentObject,
+	AmplifyUrl,
 } from '@aws-amplify/core/internals/utils';
 import { PollyClient, SynthesizeSpeechCommand } from '@aws-sdk/client-polly';
 import {
@@ -451,27 +452,31 @@ export class AmazonAIConvertPredictionsProvider {
 		region: string;
 		languageCode: string;
 	}): string {
-		const credentials = {
-			access_key: accessKeyId,
-			secret_key: secretAccessKey,
-			session_token: sessionToken,
-		};
+		const url = new AmplifyUrl(
+			[
+				`wss://transcribestreaming.${region}.amazonaws.com:8443`,
+				'/stream-transcription-websocket?',
+				`media-encoding=pcm&`,
+				`sample-rate=${
+					LANGUAGES_CODE_IN_8KHZ.includes(languageCode) ? '8000' : '16000'
+				}&`,
+				`language-code=${languageCode}`,
+			].join('')
+		);
 
-		const url = [
-			`wss://transcribestreaming.${region}.amazonaws.com:8443`,
-			'/stream-transcription-websocket?',
-			`media-encoding=pcm&`,
-			`sample-rate=${
-				LANGUAGES_CODE_IN_8KHZ.includes(languageCode) ? '8000' : '16000'
-			}&`,
-			`language-code=${languageCode}`,
-		].join('');
-
-		const signedUrl = Signer.signUrl(
-			url,
-			credentials,
-			{ region, service: 'transcribe' },
-			300
+		// const signedUrl = Signer.signUrl(
+		// 	url,
+		// 	credentials,
+		// 	{ region, service: 'transcribe' },
+		// 	300
+		// );
+		const signedUrl = presignUrl(
+			{
+				url,
+			},
+			{
+				credentials,
+			}
 		);
 
 		return signedUrl;

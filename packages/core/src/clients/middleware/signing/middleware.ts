@@ -7,7 +7,7 @@ import {
 	HttpResponse,
 	MiddlewareHandler,
 } from '../../types';
-import { signRequest } from './signer/signatureV4';
+import { signRequest } from '../../../signer/signatureV4';
 import { getSkewCorrectedDate } from './utils/getSkewCorrectedDate';
 import { getUpdatedSystemClockOffset } from './utils/getUpdatedSystemClockOffset';
 
