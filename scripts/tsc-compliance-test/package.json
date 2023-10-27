@@ -4,13 +4,17 @@
 	"license": "MIT",
 	"private": true,
 	"devDependencies": {
+		"@tsconfig/react-native": "^3.0.2",
 		"@types/node": "^16.11.7",
 		"aws-amplify": "6.0.0",
-		"typescript": "4.2.x"
+		"typescript": "4.2.x",
+		"@types/react-native": "0.70.x",
+		"typescript-5-for-rn-test": "npm:typescript@5.x.x"
 	},
 	"scripts": {
-		"test:compliance": "yarn test:compliance:ts4.2 && yarn test:compliance:skipLibCheck",
+		"test:compliance": "yarn test:compliance:ts4.2 && yarn test:compliance:skipLibCheck && yarn test:compliance:rn",
 		"test:compliance:ts4.2": "tsc -p tsconfig.ts4_2.json",
-		"test:compliance:skipLibCheck": "tsc -p tsconfig.skipLibCheck.json"
+		"test:compliance:skipLibCheck": "tsc -p tsconfig.skipLibCheck.json",
+		"test:compliance:rn": "yarn -p tsconfig.rn.json"
 	}
 }
