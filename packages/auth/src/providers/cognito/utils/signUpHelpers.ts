@@ -18,7 +18,9 @@ import { AUTO_SIGN_IN_EXCEPTION } from '../../../errors/constants';
 
 const MAX_AUTOSIGNIN_POLLING_MS = 3 * 60 * 1000;
 
-export function handleCodeAutoSignIn(signInInput: SignInInput) {
+export function handleCodeAutoSignIn(
+	signInInput: SignInInputWithOptionalPassword
+) {
 	const stopHubListener = HubInternal.listen<AutoSignInEventData>(
 		'auth-internal',
 		async ({ payload }) => {
@@ -69,7 +71,7 @@ function debounce<F extends (...args: any[]) => any>(fun: F, delay: number) {
 }
 
 function handleAutoSignInWithLink(
-	signInInput: SignInInput,
+	signInInput: SignInInputWithOptionalPassword,
 	resolve: Function,
 	reject: Function
 ) {
@@ -141,7 +143,7 @@ export function isSignUpComplete(output: SignUpCommandOutput): boolean {
 }
 
 export function autoSignInWhenUserIsConfirmedWithLink(
-	signInInput: SignInInput
+	signInInput: SignInInputWithOptionalPassword
 ): AutoSignInCallback {
 	return async () => {
 		return new Promise<SignInOutput>(async (resolve, reject) => {
@@ -150,7 +152,7 @@ export function autoSignInWhenUserIsConfirmedWithLink(
 	};
 }
 async function handleAutoSignInWithCodeOrUserConfirmed(
-	signInInput: SignInInput,
+	signInInput: SignInInputWithOptionalPassword,
 	resolve: Function,
 	reject: Function
 ) {
@@ -164,7 +166,9 @@ async function handleAutoSignInWithCodeOrUserConfirmed(
 	}
 }
 
-function autoSignInWithCode(signInInput: SignInInput): AutoSignInCallback {
+function autoSignInWithCode(
+	signInInput: SignInInputWithOptionalPassword
+): AutoSignInCallback {
 	return async () => {
 		return new Promise<SignInOutput>(async (resolve, reject) => {
 			debouncedAutoSignWithCodeOrUserConfirmed([signInInput, resolve, reject]);

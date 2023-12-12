@@ -54,7 +54,10 @@ type SignInApi = {
  * @throws AuthTokenConfigException - Thrown when the token provider config is invalid.
  */
 export const signIn: SignInApi = async (
-	input: SignInInput | SignInWithMagicLinkInput | SignInWithOTPInput
+	input:
+		| SignInInputWithOptionalPassword
+		| SignInWithMagicLinkInput
+		| SignInWithOTPInput
 ): Promise<{ isSignedIn: boolean; nextStep: any }> => {
 	// export async function signIn(input: SignInInput): Promise<SignInOutput> {
 	const passwordlessFlow = input.passwordlessFlow;
