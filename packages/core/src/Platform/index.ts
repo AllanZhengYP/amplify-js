@@ -56,12 +56,13 @@ export const getAmplifyUserAgentObject = ({
 export const getAmplifyUserAgent = (
 	customUserAgentDetails?: CustomUserAgentDetails,
 ): string => {
-	const userAgent = getAmplifyUserAgentObject(customUserAgentDetails);
-	const userAgentString = userAgent
-		.map(([agentKey, agentValue]) =>
-			agentKey && agentValue ? `${agentKey}/${agentValue}` : agentKey,
-		)
-		.join(' ');
+	// const userAgent = getAmplifyUserAgentObject(customUserAgentDetails);
+	// const userAgentString = userAgent
+	// 	.map(([agentKey, agentValue]) =>
+	// 		agentKey && agentValue ? `${agentKey}/${agentValue}` : agentKey,
+	// 	)
+	// 	.join(' ');
 
-	return userAgentString;
+	// return userAgentString;
+	return ''
 };

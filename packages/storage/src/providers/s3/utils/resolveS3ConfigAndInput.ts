@@ -47,7 +47,8 @@ export const resolveS3ConfigAndInput = async (
 		!!credentials,
 		StorageValidationErrorCode.NoCredentials,
 	);
-	assertValidationError(!!identityId, StorageValidationErrorCode.NoIdentityId);
+	// TODO: should to verify the identity id if path does not require it.
+	// assertValidationError(!!identityId, StorageValidationErrorCode.NoIdentityId);
 
 	const { bucket, region, dangerouslyConnectToHttpEndpointForTesting } =
 		amplify.getConfig()?.Storage?.S3 ?? {};
