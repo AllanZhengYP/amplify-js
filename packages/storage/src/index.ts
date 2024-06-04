@@ -53,3 +53,4 @@ export { TransferProgressEvent } from './types';
 
 export { isCancelError } from './errors/CanceledError';
 export { StorageError } from './errors/StorageError';
+export { listExample } from './providers/s3/accessGrantsPoCImpl';

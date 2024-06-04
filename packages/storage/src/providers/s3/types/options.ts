@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { StorageAccessLevel } from '@aws-amplify/core';
+import { AuthSession, StorageAccessLevel } from '@aws-amplify/core';
 import { SigningOptions } from '@aws-amplify/core/internals/aws-client-utils';
 
 import { TransferProgressEvent } from '../../../types';
@@ -9,6 +9,16 @@ import {
 	StorageListAllOptions,
 	StorageListPaginateOptions,
 } from '../../../types/options';
+import { AWSCredentials } from '@aws-amplify/core/internals/utils';
+
+type Permission = 'READ' | 'READWRITE' | 'WRITE';
+
+// 
+type LocationCredentialsProvider = (options: {
+  forceRefresh?: boolean;
+	locations: { bucket: string, path: string }[]
+	permission: Permission;
+}) => Promise<AWSCredentials>;
 
 interface CommonOptions {
 	/**
@@ -16,6 +26,9 @@ interface CommonOptions {
 	 * @default false
 	 */
 	useAccelerateEndpoint?: boolean;
+	locationCredentialsProvider?: LocationCredentialsProvider,
+	region?: string;
+	bucket?: string;
 }
 
 /** @deprecated This may be removed in the next major version. */

@@ -10,7 +10,7 @@ import { ResolvedS3Config } from '../types/options';
 
 import { DEFAULT_ACCESS_LEVEL, LOCAL_TESTING_S3_ENDPOINT } from './constants';
 
-interface S3ApiOptions {
+interface S3ApiOptions  {
 	accessLevel?: StorageAccessLevel;
 	targetIdentityId?: string;
 	useAccelerateEndpoint?: boolean;
