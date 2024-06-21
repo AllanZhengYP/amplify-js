@@ -53,9 +53,17 @@ export interface ListLocationsOutput<T extends LocationAccess> {
 // Interface for listLocations() handler
 export type ListLocations = () => Promise<ListLocationsOutput<LocationAccess>>;
 
+/**
+ * @internal
+ */
+export interface Location {
+	scope: string;
+	permission: Permission;
+}
+
 // Interface for getLocationCredentials() handler.
 export type LocationCredentialsHandler = (
-	input: LocationAccess,
+	input: Location,
 ) => Promise<{ credentials: AWSCredentials; scope?: string }>;
 
 export interface LocationCredentialsStore {
@@ -64,10 +72,7 @@ export interface LocationCredentialsStore {
 	// when forced to.
 	// If specific credentials scope `forLocation` is omitted, the store will attempt to resolve
 	// locations-specific credentials from the input bucket and full path.
-	getProvider(forLocation?: {
-		scope: string;
-		permission: Permission;
-	}): LocationCredentialsProvider;
+	getProvider(forLocation?: Location): LocationCredentialsProvider;
 	// Invalidate cached credentials and force subsequent calls to get location-specific
 	// credentials to throw. It also makes subsequent calls to `getCredentialsProviderForLocation`
 	// to throw.
