@@ -1,9 +1,9 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccessGrant, CredentialsProvider, ListLocationsOutput } from './types';
+import { CredentialsProvider, ListLocationsHandler } from '../types';
 
-export interface ListCallerAccessGrantsInput {
+export interface CreateListLocationsHandlerInput {
 	accountId: string;
 	credentialsProvider: CredentialsProvider;
 	region: string;
@@ -14,12 +14,10 @@ export interface ListCallerAccessGrantsInput {
 	};
 }
 
-export type ListCallerAccessGrantsOutput = ListLocationsOutput<AccessGrant>;
-
-export const listCallerAccessGrants = (
+export const createListLocationsHandler = (
 	// eslint-disable-next-line unused-imports/no-unused-vars
-	input: ListCallerAccessGrantsInput,
-): Promise<ListCallerAccessGrantsOutput> => {
+	input: CreateListLocationsHandlerInput,
+): ListLocationsHandler => {
 	// TODO(@AllanZhengYP)
 	throw new Error('Not Implemented');
 };

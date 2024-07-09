@@ -1,10 +1,13 @@
+/* eslint-disable unused-imports/no-unused-vars */
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import {
 	CredentialsProvider,
-	ListLocations,
+	ListLocationsHandler,
 	LocationCredentialsHandler,
-} from './types';
+} from '../types';
+
+import { credentialsCachingDecorator } from './credentialsCachingDecorator';
 
 export interface ManagedAuthAdapterInput {
 	accountId: string;
@@ -13,15 +16,15 @@ export interface ManagedAuthAdapterInput {
 }
 
 export interface ManagedAuthAdapterOutput {
-	listLocations: ListLocations;
+	listLocations: ListLocationsHandler;
 	getLocationCredentials: LocationCredentialsHandler;
 	region: string;
 }
 
 export const managedAuthAdapter = (
 	// eslint-disable-next-line unused-imports/no-unused-vars
-	input: ManagedAuthAdapterInput,
+	{ credentialsProvider, region, accountId }: ManagedAuthAdapterInput,
 ): ManagedAuthAdapterOutput => {
-	// TODO(@AllanZhengYP)
-	throw new Error('Not implemented');
+	const credentialsProviderCaching =
+		credentialsCachingDecorator(credentialsProvider);
 };

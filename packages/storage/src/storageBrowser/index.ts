@@ -3,12 +3,12 @@
 
 export {
 	listCallerAccessGrants,
-	ListCallerAccessGrantsInput,
+	CreateListLocationsHandlerInput as ListCallerAccessGrantsInput,
 	ListCallerAccessGrantsOutput,
-} from './listCallerAccessGrants';
-export { createLocationCredentialsHandler } from './createLocationCredentialsHandler';
+} from './managedAuthAdapter/createListLocationsHandler';
+export { createLocationCredentialsHandler } from './managedAuthAdapter/createLocationCredentialsHandler';
 export { createLocationCredentialsStore } from './locationCredentialsStore';
 export {
 	managedAuthAdapter,
 	ManagedAuthAdapterInput,
-} from './managedAuthAdapter';
+} from './managedAuthAdapter/managedAuthAdapter';

@@ -68,8 +68,18 @@ export interface ListLocationsOutput<T extends LocationAccess> {
 	nextToken?: string;
 }
 
+/**
+ * @internal
+ */
+export interface ListLocationsInput {
+	pageSize?: number;
+	nextToken?: string;
+}
+
 // Interface for listLocations() handler
-export type ListLocations = () => Promise<ListLocationsOutput<LocationAccess>>;
+export type ListLocationsHandler = (
+	input?: ListLocationsInput,
+) => Promise<ListLocationsOutput<LocationAccess>>;
 
 // Interface for getLocationCredentials() handler.
 export type LocationCredentialsHandler = (
