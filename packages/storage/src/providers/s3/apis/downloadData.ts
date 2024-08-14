@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Amplify } from '@aws-amplify/core';
-import { StorageAction } from '@aws-amplify/core/internals/utils';
+import { AWSCredentials, StorageAction } from '@aws-amplify/core/internals/utils';
 
 import {
 	DownloadDataInput,
@@ -103,6 +103,27 @@ export function downloadData(
 	});
 
 	return downloadTask;
+}
+
+interface _downloadDataInput {
+	key: string;
+	bucket: string;
+	bytesRange?: {
+		start: number;
+		end: number;
+	};
+}
+interface _downloadDataConfig {
+	credentialsProvider: () => Promise<{ credentials: AWSCredentials }>,
+	region: string;
+	endpoint?: string;
+	onProgress: (progress: ProgressEvent) => void;
+	requestHooks?: {
+		
+	}
+}
+function _downloadData(config: _downloadDataConfig, input: _downloadDataInput) {
+
 }
 
 const downloadDataJob =
