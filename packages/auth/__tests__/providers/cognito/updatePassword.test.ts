@@ -8,8 +8,7 @@ import { AuthError } from '../../../src/errors/AuthError';
 import { AuthValidationErrorCode } from '../../../src/errors/types/validation';
 import { updatePassword } from '../../../src/providers/cognito';
 import { ChangePasswordException } from '../../../src/providers/cognito/types/errors';
-import { createChangePasswordClient } from '../../../src/foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../../../src/providers/cognito/factories';
+import { changePassword } from '../../../src/providers/cognito/utils/clients/CognitoIdentityProvider';
 
 import { getMockError, mockAccessToken } from './testUtils/data';
 import { setUpGetConfig } from './testUtils/setUpGetConfig';
@@ -23,22 +22,15 @@ jest.mock('@aws-amplify/core/internals/utils', () => ({
 	isBrowser: jest.fn(() => false),
 }));
 jest.mock(
-	'../../../src/foundation/factories/serviceClients/cognitoIdentityProvider',
+	'../../../src/providers/cognito/utils/clients/CognitoIdentityProvider',
 );
-jest.mock('../../../src/providers/cognito/factories');
 
 describe('updatePassword', () => {
 	const oldPassword = 'oldPassword';
 	const newPassword = 'newPassword';
 	// assert mocks
 	const mockFetchAuthSession = fetchAuthSession as jest.Mock;
-	const mockChangePassword = jest.fn();
-	const mockCreateChangePasswordClient = jest.mocked(
-		createChangePasswordClient,
-	);
-	const mockCreateCognitoUserPoolEndpointResolver = jest.mocked(
-		createCognitoUserPoolEndpointResolver,
-	);
+	const mockChangePassword = changePassword as jest.Mock;
 
 	beforeAll(() => {
 		setUpGetConfig(Amplify);
@@ -49,13 +41,11 @@ describe('updatePassword', () => {
 
 	beforeEach(() => {
 		mockChangePassword.mockResolvedValue({});
-		mockCreateChangePasswordClient.mockReturnValueOnce(mockChangePassword);
 	});
 
 	afterEach(() => {
 		mockChangePassword.mockReset();
 		mockFetchAuthSession.mockClear();
-		mockCreateChangePasswordClient.mockClear();
 	});
 
 	it('should call changePassword', async () => {
@@ -69,25 +59,6 @@ describe('updatePassword', () => {
 				ProposedPassword: newPassword,
 			}),
 		);
-	});
-
-	it('invokes mockCreateCognitoUserPoolEndpointResolver with expected endpointOverride', async () => {
-		const expectedUserPoolEndpoint = 'https://my-custom-endpoint.com';
-		jest.mocked(Amplify.getConfig).mockReturnValueOnce({
-			Auth: {
-				Cognito: {
-					userPoolClientId: '111111-aaaaa-42d8-891d-ee81a1549398',
-					userPoolId: 'us-west-2_zzzzz',
-					identityPoolId: 'us-west-2:xxxxxx',
-					userPoolEndpoint: expectedUserPoolEndpoint,
-				},
-			},
-		});
-		await updatePassword({ oldPassword, newPassword });
-
-		expect(mockCreateCognitoUserPoolEndpointResolver).toHaveBeenCalledWith({
-			endpointOverride: expectedUserPoolEndpoint,
-		});
 	});
 
 	it('should throw an error when oldPassword is empty', async () => {

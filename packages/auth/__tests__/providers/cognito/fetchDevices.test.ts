@@ -6,9 +6,8 @@ import { decodeJWT } from '@aws-amplify/core/internals/utils';
 
 import { AuthError } from '../../../src/errors/AuthError';
 import { fetchDevices } from '../../../src/providers/cognito';
+import { listDevices } from '../../../src/providers/cognito/utils/clients/CognitoIdentityProvider';
 import { ListDevicesException } from '../../../src/providers/cognito/types/errors';
-import { createListDevicesClient } from '../../../src/foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../../../src/providers/cognito/factories';
 
 import { getMockError, mockAccessToken } from './testUtils/data';
 import { setUpGetConfig } from './testUtils/setUpGetConfig';
@@ -22,9 +21,8 @@ jest.mock('@aws-amplify/core/internals/utils', () => ({
 	isBrowser: jest.fn(() => false),
 }));
 jest.mock(
-	'../../../src/foundation/factories/serviceClients/cognitoIdentityProvider',
+	'../../../src/providers/cognito/utils/clients/CognitoIdentityProvider',
 );
-jest.mock('../../../src/providers/cognito/factories');
 
 describe('fetchDevices', () => {
 	const dateEpoch = 1.696296885807e9;
@@ -53,11 +51,7 @@ describe('fetchDevices', () => {
 	};
 	// assert mocks
 	const mockFetchAuthSession = fetchAuthSession as jest.Mock;
-	const mockListDevices = jest.fn();
-	const mockCreateListDevicesClient = jest.mocked(createListDevicesClient);
-	const mockCreateCognitoUserPoolEndpointResolver = jest.mocked(
-		createCognitoUserPoolEndpointResolver,
-	);
+	const mockListDevices = listDevices as jest.Mock;
 
 	beforeAll(() => {
 		setUpGetConfig(Amplify);
@@ -71,13 +65,11 @@ describe('fetchDevices', () => {
 			Devices: [clientResponseDevice],
 			$metadata: {},
 		});
-		mockCreateListDevicesClient.mockReturnValueOnce(mockListDevices);
 	});
 
 	afterEach(() => {
 		mockListDevices.mockReset();
 		mockFetchAuthSession.mockClear();
-		mockCreateListDevicesClient.mockClear();
 	});
 
 	it('should fetch devices and parse client response correctly', async () => {
@@ -90,25 +82,6 @@ describe('fetchDevices', () => {
 			}),
 		);
 		expect(mockListDevices).toHaveBeenCalledTimes(1);
-	});
-
-	it('invokes mockCreateCognitoUserPoolEndpointResolver with expected endpointOverride', async () => {
-		const expectedUserPoolEndpoint = 'https://my-custom-endpoint.com';
-		jest.mocked(Amplify.getConfig).mockReturnValueOnce({
-			Auth: {
-				Cognito: {
-					userPoolClientId: '111111-aaaaa-42d8-891d-ee81a1549398',
-					userPoolId: 'us-west-2_zzzzz',
-					identityPoolId: 'us-west-2:xxxxxx',
-					userPoolEndpoint: expectedUserPoolEndpoint,
-				},
-			},
-		});
-		await fetchDevices();
-
-		expect(mockCreateCognitoUserPoolEndpointResolver).toHaveBeenCalledWith({
-			endpointOverride: expectedUserPoolEndpoint,
-		});
 	});
 
 	it('should throw an error when service returns an error response', async () => {

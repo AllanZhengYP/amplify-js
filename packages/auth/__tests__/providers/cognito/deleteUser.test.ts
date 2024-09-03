@@ -7,10 +7,9 @@ import { decodeJWT } from '@aws-amplify/core/internals/utils';
 import { AuthError } from '../../../src/errors/AuthError';
 import { deleteUser } from '../../../src/providers/cognito';
 import { tokenOrchestrator } from '../../../src/providers/cognito/tokenProvider';
+import { deleteUser as providerDeleteUser } from '../../../src/providers/cognito/utils/clients/CognitoIdentityProvider';
 import { DeleteUserException } from '../../../src/providers/cognito/types/errors';
 import { signOut } from '../../../src/providers/cognito/apis/signOut';
-import { createDeleteUserClient } from '../../../src/foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../../../src/providers/cognito/factories';
 
 import { getMockError, mockAccessToken } from './testUtils/data';
 import { setUpGetConfig } from './testUtils/setUpGetConfig';
@@ -24,23 +23,18 @@ jest.mock('@aws-amplify/core/internals/utils', () => ({
 	isBrowser: jest.fn(() => false),
 }));
 jest.mock('../../../src/providers/cognito/apis/signOut');
-jest.mock('../../../src/providers/cognito/tokenProvider');
 jest.mock(
-	'../../../src/foundation/factories/serviceClients/cognitoIdentityProvider',
+	'../../../src/providers/cognito/utils/clients/CognitoIdentityProvider',
 );
-jest.mock('../../../src/providers/cognito/factories');
+jest.mock('../../../src/providers/cognito/tokenProvider');
 
 describe('deleteUser', () => {
 	// assert mocks
 	const mockFetchAuthSession = fetchAuthSession as jest.Mock;
-	const mockDeleteUser = jest.fn();
-	const mockCreateDeleteUserClient = jest.mocked(createDeleteUserClient);
+	const mockDeleteUser = providerDeleteUser as jest.Mock;
 	const mockSignOut = signOut as jest.Mock;
 	const mockClearDeviceMetadata =
 		tokenOrchestrator.clearDeviceMetadata as jest.Mock;
-	const mockCreateCognitoUserPoolEndpointResolver = jest.mocked(
-		createCognitoUserPoolEndpointResolver,
-	);
 
 	beforeAll(() => {
 		setUpGetConfig(Amplify);
@@ -51,14 +45,12 @@ describe('deleteUser', () => {
 
 	beforeEach(() => {
 		mockDeleteUser.mockResolvedValue({ $metadata: {} });
-		mockCreateDeleteUserClient.mockReturnValueOnce(mockDeleteUser);
 	});
 
 	afterEach(() => {
 		mockDeleteUser.mockReset();
 		mockClearDeviceMetadata.mockClear();
 		mockFetchAuthSession.mockClear();
-		mockCreateDeleteUserClient.mockClear();
 	});
 
 	it('should delete user, sign out and clear device tokens', async () => {
@@ -78,25 +70,6 @@ describe('deleteUser', () => {
 		expect(mockClearDeviceMetadata.mock.invocationCallOrder[0]).toBeLessThan(
 			mockSignOut.mock.invocationCallOrder[0],
 		);
-	});
-
-	it('invokes mockCreateCognitoUserPoolEndpointResolver with expected endpointOverride', async () => {
-		const expectedUserPoolEndpoint = 'https://my-custom-endpoint.com';
-		jest.mocked(Amplify.getConfig).mockReturnValueOnce({
-			Auth: {
-				Cognito: {
-					userPoolClientId: '111111-aaaaa-42d8-891d-ee81a1549398',
-					userPoolId: 'us-west-2_zzzzz',
-					identityPoolId: 'us-west-2:xxxxxx',
-					userPoolEndpoint: expectedUserPoolEndpoint,
-				},
-			},
-		});
-		await deleteUser();
-
-		expect(mockCreateCognitoUserPoolEndpointResolver).toHaveBeenCalledWith({
-			endpointOverride: expectedUserPoolEndpoint,
-		});
 	});
 
 	it('should throw an error when service returns an error response', async () => {

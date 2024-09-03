@@ -10,11 +10,10 @@ import {
 import { FetchMFAPreferenceOutput } from '../types';
 import { getMFAType, getMFATypes } from '../utils/signInHelpers';
 import { GetUserException } from '../types/errors';
-import { getRegionFromUserPoolId } from '../../../foundation/parsers';
+import { getUser } from '../utils/clients/CognitoIdentityProvider';
+import { getRegion } from '../utils/clients/CognitoIdentityProvider/utils';
 import { assertAuthTokens } from '../utils/types';
 import { getAuthUserAgentValue } from '../../../utils';
-import { createGetUserClient } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../factories';
 
 /**
  * Fetches the preferred MFA setting and enabled MFA settings for the user.
@@ -27,17 +26,11 @@ import { createCognitoUserPoolEndpointResolver } from '../factories';
 export async function fetchMFAPreference(): Promise<FetchMFAPreferenceOutput> {
 	const authConfig = Amplify.getConfig().Auth?.Cognito;
 	assertTokenProviderConfig(authConfig);
-	const { userPoolEndpoint, userPoolId } = authConfig;
 	const { tokens } = await fetchAuthSession({ forceRefresh: false });
 	assertAuthTokens(tokens);
-	const getUser = createGetUserClient({
-		endpointResolver: createCognitoUserPoolEndpointResolver({
-			endpointOverride: userPoolEndpoint,
-		}),
-	});
 	const { PreferredMfaSetting, UserMFASettingList } = await getUser(
 		{
-			region: getRegionFromUserPoolId(userPoolId),
+			region: getRegion(authConfig.userPoolId),
 			userAgentValue: getAuthUserAgentValue(AuthAction.FetchMFAPreference),
 		},
 		{

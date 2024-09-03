@@ -7,8 +7,7 @@ import { resendSignUpCode } from '../../../src/providers/cognito';
 import { AuthValidationErrorCode } from '../../../src/errors/types/validation';
 import { AuthError } from '../../../src/errors/AuthError';
 import { ResendConfirmationException } from '../../../src/providers/cognito/types/errors';
-import { createResendConfirmationCodeClient } from '../../../src/foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../../../src/providers/cognito/factories';
+import { resendConfirmationCode } from '../../../src/providers/cognito/utils/clients/CognitoIdentityProvider';
 
 import { authAPITestParams } from './testUtils/authApiTestParams';
 import { getMockError } from './testUtils/data';
@@ -23,20 +22,13 @@ jest.mock('@aws-amplify/core/internals/utils', () => ({
 	isBrowser: jest.fn(() => false),
 }));
 jest.mock(
-	'../../../src/foundation/factories/serviceClients/cognitoIdentityProvider',
+	'../../../src/providers/cognito/utils/clients/CognitoIdentityProvider',
 );
-jest.mock('../../../src/providers/cognito/factories');
 
 describe('resendSignUpCode', () => {
 	const { user1 } = authAPITestParams;
 	// assert mocks
-	const mockResendConfirmationCode = jest.fn();
-	const mockCreateResendConfirmationCodeClient = jest.mocked(
-		createResendConfirmationCodeClient,
-	);
-	const mockCreateCognitoUserPoolEndpointResolver = jest.mocked(
-		createCognitoUserPoolEndpointResolver,
-	);
+	const mockResendConfirmationCode = resendConfirmationCode as jest.Mock;
 
 	beforeAll(() => {
 		setUpGetConfig(Amplify);
@@ -45,9 +37,6 @@ describe('resendSignUpCode', () => {
 	beforeEach(() => {
 		mockResendConfirmationCode.mockResolvedValue(
 			authAPITestParams.resendSignUpClientResult,
-		);
-		mockCreateResendConfirmationCodeClient.mockReturnValueOnce(
-			mockResendConfirmationCode,
 		);
 	});
 
@@ -72,26 +61,6 @@ describe('resendSignUpCode', () => {
 			},
 		);
 		expect(mockResendConfirmationCode).toHaveBeenCalledTimes(1);
-	});
-
-	it('invokes createCognitoUserPoolEndpointResolver with expected endpointOverride', async () => {
-		const expectedUserPoolEndpoint = 'https://my-custom-endpoint.com';
-		jest.mocked(Amplify.getConfig).mockReturnValueOnce({
-			Auth: {
-				Cognito: {
-					userPoolClientId: '111111-aaaaa-42d8-891d-ee81a1549398',
-					userPoolId: 'us-west-2_zzzzz',
-					identityPoolId: 'us-west-2:xxxxxx',
-					userPoolEndpoint: expectedUserPoolEndpoint,
-				},
-			},
-		});
-		await resendSignUpCode({
-			username: user1.username,
-		});
-		expect(mockCreateCognitoUserPoolEndpointResolver).toHaveBeenCalledWith({
-			endpointOverride: expectedUserPoolEndpoint,
-		});
 	});
 
 	it('should throw an error when username is empty', async () => {

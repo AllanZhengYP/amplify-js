@@ -6,12 +6,12 @@ import { Amplify } from 'aws-amplify';
 import { signIn } from '../../../src/providers/cognito';
 import * as initiateAuthHelpers from '../../../src/providers/cognito/utils/signInHelpers';
 import { signInWithUserPassword } from '../../../src/providers/cognito/apis/signInWithUserPassword';
+import { RespondToAuthChallengeCommandOutput } from '../../../src/providers/cognito/utils/clients/CognitoIdentityProvider/types';
 import {
 	cognitoUserPoolsTokenProvider,
 	tokenOrchestrator,
 } from '../../../src/providers/cognito/tokenProvider';
-import { createInitiateAuthClient } from '../../../src/foundation/factories/serviceClients/cognitoIdentityProvider';
-import { RespondToAuthChallengeCommandOutput } from '../../../src/foundation/factories/serviceClients/cognitoIdentityProvider/types';
+import * as clients from '../../../src/providers/cognito/utils/clients/CognitoIdentityProvider';
 
 import { authAPITestParams } from './testUtils/authApiTestParams';
 
@@ -20,27 +20,20 @@ jest.mock('@aws-amplify/core/internals/utils', () => ({
 	...jest.requireActual('@aws-amplify/core/internals/utils'),
 	isBrowser: jest.fn(() => false),
 }));
-jest.mock(
-	'../../../src/foundation/factories/serviceClients/cognitoIdentityProvider',
-);
 
 const authConfig = {
 	Cognito: {
 		userPoolClientId: '111111-aaaaa-42d8-891d-ee81a1549398',
 		userPoolId: 'us-west-2_zzzzz',
-		userPoolEndpoint: 'https://custom-endpoint.com',
 	},
 };
 
+cognitoUserPoolsTokenProvider.setAuthConfig(authConfig);
+Amplify.configure({
+	Auth: authConfig,
+});
 describe('signIn API happy path cases', () => {
 	let handleUserPasswordFlowSpy: jest.SpyInstance;
-
-	beforeAll(() => {
-		Amplify.configure({
-			Auth: authConfig,
-		});
-		cognitoUserPoolsTokenProvider.setAuthConfig(authConfig);
-	});
 
 	beforeEach(() => {
 		handleUserPasswordFlowSpy = jest
@@ -67,7 +60,7 @@ describe('signIn API happy path cases', () => {
 		expect(handleUserPasswordFlowSpy).toHaveBeenCalledTimes(1);
 	});
 
-	test('handleUserPasswordAuthFlow should be called with clientMetadata from request', async () => {
+	test('handleUserPasswordAuthFlow should be called with clientMetada from request', async () => {
 		const { username } = authAPITestParams.user1;
 		const { password } = authAPITestParams.user1;
 		await signInWithUserPassword({
@@ -86,19 +79,22 @@ describe('signIn API happy path cases', () => {
 });
 
 describe('Cognito ASF', () => {
-	const mockInitiateAuth = jest.fn();
-	const mockCreateInitiateAuthClient = jest.mocked(createInitiateAuthClient);
+	let initiateAuthSpy: jest.SpyInstance;
 
+	afterAll(() => {
+		jest.restoreAllMocks();
+	});
 	beforeEach(() => {
-		mockInitiateAuth.mockResolvedValueOnce({
-			ChallengeName: 'SRP_AUTH',
-			Session: '1234234232',
-			$metadata: {},
-			ChallengeParameters: {
-				USER_ID_FOR_SRP: authAPITestParams.user1.username,
-			},
-		});
-		mockCreateInitiateAuthClient.mockReturnValueOnce(mockInitiateAuth);
+		initiateAuthSpy = jest
+			.spyOn(clients, 'initiateAuth')
+			.mockImplementationOnce(async () => ({
+				ChallengeName: 'SRP_AUTH',
+				Session: '1234234232',
+				$metadata: {},
+				ChallengeParameters: {
+					USER_ID_FOR_SRP: authAPITestParams.user1.username,
+				},
+			}));
 		// load Cognito ASF polyfill
 		(window as any).AmazonCognitoAdvancedSecurityData = {
 			getData() {
@@ -108,8 +104,7 @@ describe('Cognito ASF', () => {
 	});
 
 	afterEach(() => {
-		mockInitiateAuth.mockClear();
-		mockCreateInitiateAuthClient.mockClear();
+		initiateAuthSpy.mockClear();
 		(window as any).AmazonCognitoAdvancedSecurityData = undefined;
 	});
 
@@ -125,7 +120,7 @@ describe('Cognito ASF', () => {
 		} catch (_) {
 			// only want to test the contents
 		}
-		expect(mockInitiateAuth).toHaveBeenCalledWith(
+		expect(initiateAuthSpy).toHaveBeenCalledWith(
 			expect.objectContaining({
 				region: 'us-west-2',
 			}),

@@ -8,8 +8,7 @@ import { AuthError } from '../../../src/errors/AuthError';
 import { AuthValidationErrorCode } from '../../../src/errors/types/validation';
 import { VerifySoftwareTokenException } from '../../../src/providers/cognito/types/errors';
 import { verifyTOTPSetup } from '../../../src/providers/cognito';
-import { createVerifySoftwareTokenClient } from '../../../src/foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../../../src/providers/cognito/factories';
+import { verifySoftwareToken } from '../../../src/providers/cognito/utils/clients/CognitoIdentityProvider';
 
 import { getMockError, mockAccessToken } from './testUtils/data';
 import { setUpGetConfig } from './testUtils/setUpGetConfig';
@@ -23,22 +22,15 @@ jest.mock('@aws-amplify/core/internals/utils', () => ({
 	isBrowser: jest.fn(() => false),
 }));
 jest.mock(
-	'../../../src/foundation/factories/serviceClients/cognitoIdentityProvider',
+	'../../../src/providers/cognito/utils/clients/CognitoIdentityProvider',
 );
-jest.mock('../../../src/providers/cognito/factories');
 
 describe('verifyTOTPSetup', () => {
 	const code = '123456';
 	const friendlyDeviceName = 'FriendlyDeviceName';
 	// assert mocks
 	const mockFetchAuthSession = fetchAuthSession as jest.Mock;
-	const mockVerifySoftwareToken = jest.fn();
-	const mockCreateVerifySoftwareTokenClient = jest.mocked(
-		createVerifySoftwareTokenClient,
-	);
-	const mockCreateCognitoUserPoolEndpointResolver = jest.mocked(
-		createCognitoUserPoolEndpointResolver,
-	);
+	const mockVerifySoftwareToken = verifySoftwareToken as jest.Mock;
 
 	beforeAll(() => {
 		setUpGetConfig(Amplify);
@@ -49,15 +41,11 @@ describe('verifyTOTPSetup', () => {
 
 	beforeEach(() => {
 		mockVerifySoftwareToken.mockResolvedValue({});
-		mockCreateVerifySoftwareTokenClient.mockReturnValueOnce(
-			mockVerifySoftwareToken,
-		);
 	});
 
 	afterEach(() => {
 		mockVerifySoftwareToken.mockReset();
 		mockFetchAuthSession.mockClear();
-		mockCreateVerifySoftwareTokenClient.mockClear();
 	});
 
 	it('should return successful response', async () => {
@@ -74,29 +62,6 @@ describe('verifyTOTPSetup', () => {
 				FriendlyDeviceName: friendlyDeviceName,
 			}),
 		);
-	});
-
-	it('invokes mockCreateCognitoUserPoolEndpointResolver with expected endpointOverride', async () => {
-		const expectedUserPoolEndpoint = 'https://my-custom-endpoint.com';
-		jest.mocked(Amplify.getConfig).mockReturnValueOnce({
-			Auth: {
-				Cognito: {
-					userPoolClientId: '111111-aaaaa-42d8-891d-ee81a1549398',
-					userPoolId: 'us-west-2_zzzzz',
-					identityPoolId: 'us-west-2:xxxxxx',
-					userPoolEndpoint: expectedUserPoolEndpoint,
-				},
-			},
-		});
-
-		await verifyTOTPSetup({
-			code,
-			options: { friendlyDeviceName },
-		});
-
-		expect(mockCreateCognitoUserPoolEndpointResolver).toHaveBeenCalledWith({
-			endpointOverride: expectedUserPoolEndpoint,
-		});
 	});
 
 	it('should throw an error when code is empty', async () => {

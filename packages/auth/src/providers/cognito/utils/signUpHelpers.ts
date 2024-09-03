@@ -10,7 +10,8 @@ import { AutoSignInCallback } from '../../../types/models';
 import { AuthError } from '../../../errors/AuthError';
 import { resetAutoSignIn, setAutoSignIn } from '../apis/autoSignIn';
 import { AUTO_SIGN_IN_EXCEPTION } from '../../../errors/constants';
-import { SignUpCommandOutput } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider/types';
+
+import { SignUpCommandOutput } from './clients/CognitoIdentityProvider/types';
 
 const MAX_AUTOSIGNIN_POLLING_MS = 3 * 60 * 1000;
 

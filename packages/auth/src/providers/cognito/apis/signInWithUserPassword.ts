@@ -10,10 +10,10 @@ import { assertValidationError } from '../../../errors/utils/assertValidationErr
 import {
 	ChallengeName,
 	ChallengeParameters,
-} from '../../../foundation/factories/serviceClients/cognitoIdentityProvider/types';
+} from '../utils/clients/CognitoIdentityProvider/types';
 import {
 	getActiveSignInUsername,
-	getNewDeviceMetadata,
+	getNewDeviceMetatada,
 	getSignInResult,
 	getSignInResultFromError,
 	handleUserPasswordAuthFlow,
@@ -87,12 +87,11 @@ export async function signInWithUserPassword(
 			await cacheCognitoTokens({
 				...AuthenticationResult,
 				username: activeUsername,
-				NewDeviceMetadata: await getNewDeviceMetadata({
-					userPoolId: authConfig.userPoolId,
-					userPoolEndpoint: authConfig.userPoolEndpoint,
-					newDeviceMetadata: AuthenticationResult.NewDeviceMetadata,
-					accessToken: AuthenticationResult.AccessToken,
-				}),
+				NewDeviceMetadata: await getNewDeviceMetatada(
+					authConfig.userPoolId,
+					AuthenticationResult.NewDeviceMetadata,
+					AuthenticationResult.AccessToken,
+				),
 				signInDetails,
 			});
 			cleanActiveSignInState();

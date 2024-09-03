@@ -14,11 +14,10 @@ import {
 } from '../types/errors';
 import { SetUpTOTPOutput } from '../types';
 import { getTOTPSetupDetails } from '../utils/signInHelpers';
-import { getRegionFromUserPoolId } from '../../../foundation/parsers';
+import { associateSoftwareToken } from '../utils/clients/CognitoIdentityProvider';
+import { getRegion } from '../utils/clients/CognitoIdentityProvider/utils';
 import { assertAuthTokens } from '../utils/types';
 import { getAuthUserAgentValue } from '../../../utils';
-import { createAssociateSoftwareTokenClient } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../factories';
 
 /**
  * Sets up TOTP for the user.
@@ -31,18 +30,12 @@ import { createCognitoUserPoolEndpointResolver } from '../factories';
 export async function setUpTOTP(): Promise<SetUpTOTPOutput> {
 	const authConfig = Amplify.getConfig().Auth?.Cognito;
 	assertTokenProviderConfig(authConfig);
-	const { userPoolEndpoint, userPoolId } = authConfig;
 	const { tokens } = await fetchAuthSession({ forceRefresh: false });
 	assertAuthTokens(tokens);
 	const username = tokens.idToken?.payload['cognito:username'] ?? '';
-	const associateSoftwareToken = createAssociateSoftwareTokenClient({
-		endpointResolver: createCognitoUserPoolEndpointResolver({
-			endpointOverride: userPoolEndpoint,
-		}),
-	});
 	const { SecretCode } = await associateSoftwareToken(
 		{
-			region: getRegionFromUserPoolId(userPoolId),
+			region: getRegion(authConfig.userPoolId),
 			userAgentValue: getAuthUserAgentValue(AuthAction.SetUpTOTP),
 		},
 		{

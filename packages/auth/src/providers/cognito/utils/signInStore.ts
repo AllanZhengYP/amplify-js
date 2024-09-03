@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CognitoAuthSignInDetails } from '../types';
-import { ChallengeName } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider/types';
+
+import { ChallengeName } from './clients/CognitoIdentityProvider/types';
 
 // TODO: replace all of this implementation with state machines
 interface SignInState {

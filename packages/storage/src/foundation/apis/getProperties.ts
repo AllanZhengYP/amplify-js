@@ -39,8 +39,7 @@ export interface GetPropertiesInput {
 
 	};
 	dependencies: {
-		xmlBodyParser: (xml: string) => any;
-		transferHandler: any;
+		xmlBodyParser: (xmlStr: string) => any;
 	};
 }
 
@@ -51,11 +50,11 @@ export interface GetPropertiesOutput extends ItemBase, StorageItemBase {
 export const getProperties = async ({
 	input: { bucket, key },
 	config: { region, customEndpoint, credentialsProvider, userAgentValue },
-	dependencies: { transferHandler }
+	dependencies: { xmlBodyParser }
 }: GetPropertiesInput): Promise<GetPropertiesOutput> => {
 	const headObject = createHeadObjectHandler({
 		// TODO: dependency injection of transfer handler
-		transferHandler
+		xmlBodyParser
 	});
 	const response = await headObject(
 		{

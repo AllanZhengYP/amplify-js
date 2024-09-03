@@ -12,12 +12,11 @@ import { AuthDeliveryMedium } from '../../../types';
 import { assertValidationError } from '../../../errors/utils/assertValidationError';
 import { AuthValidationErrorCode } from '../../../errors/types/validation';
 import { ResendSignUpCodeInput, ResendSignUpCodeOutput } from '../types';
-import { getRegionFromUserPoolId } from '../../../foundation/parsers';
+import { getRegion } from '../utils/clients/CognitoIdentityProvider/utils';
+import { resendConfirmationCode } from '../utils/clients/CognitoIdentityProvider';
 import { getAuthUserAgentValue } from '../../../utils';
 import { getUserContextData } from '../utils/userContextData';
 import { ResendConfirmationException } from '../types/errors';
-import { createResendConfirmationCodeClient } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../factories';
 
 /**
  * Resend the confirmation code while signing up
@@ -38,7 +37,7 @@ export async function resendSignUpCode(
 	);
 	const authConfig = Amplify.getConfig().Auth?.Cognito;
 	assertTokenProviderConfig(authConfig);
-	const { userPoolClientId, userPoolId, userPoolEndpoint } = authConfig;
+	const { userPoolClientId, userPoolId } = authConfig;
 	const clientMetadata = input.options?.clientMetadata;
 
 	const UserContextData = getUserContextData({
@@ -46,14 +45,10 @@ export async function resendSignUpCode(
 		userPoolId,
 		userPoolClientId,
 	});
-	const resendConfirmationCode = createResendConfirmationCodeClient({
-		endpointResolver: createCognitoUserPoolEndpointResolver({
-			endpointOverride: userPoolEndpoint,
-		}),
-	});
+
 	const { CodeDeliveryDetails } = await resendConfirmationCode(
 		{
-			region: getRegionFromUserPoolId(authConfig.userPoolId),
+			region: getRegion(authConfig.userPoolId),
 			userAgentValue: getAuthUserAgentValue(AuthAction.ResendSignUpCode),
 		},
 		{

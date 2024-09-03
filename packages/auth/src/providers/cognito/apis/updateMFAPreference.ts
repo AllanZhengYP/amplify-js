@@ -10,12 +10,11 @@ import {
 import { UpdateMFAPreferenceInput } from '../types';
 import { SetUserMFAPreferenceException } from '../types/errors';
 import { MFAPreference } from '../types/models';
-import { getRegionFromUserPoolId } from '../../../foundation/parsers';
-import { CognitoMFASettings } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider/types';
+import { setUserMFAPreference } from '../utils/clients/CognitoIdentityProvider';
+import { getRegion } from '../utils/clients/CognitoIdentityProvider/utils';
+import { CognitoMFASettings } from '../utils/clients/CognitoIdentityProvider/types';
 import { assertAuthTokens } from '../utils/types';
 import { getAuthUserAgentValue } from '../../../utils';
-import { createSetUserMFAPreferenceClient } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../factories';
 
 /**
  * Updates the MFA preference of the user.
@@ -30,17 +29,11 @@ export async function updateMFAPreference(
 	const { sms, totp } = input;
 	const authConfig = Amplify.getConfig().Auth?.Cognito;
 	assertTokenProviderConfig(authConfig);
-	const { userPoolEndpoint, userPoolId } = authConfig;
 	const { tokens } = await fetchAuthSession({ forceRefresh: false });
 	assertAuthTokens(tokens);
-	const setUserMFAPreference = createSetUserMFAPreferenceClient({
-		endpointResolver: createCognitoUserPoolEndpointResolver({
-			endpointOverride: userPoolEndpoint,
-		}),
-	});
 	await setUserMFAPreference(
 		{
-			region: getRegionFromUserPoolId(userPoolId),
+			region: getRegion(authConfig.userPoolId),
 			userAgentValue: getAuthUserAgentValue(AuthAction.UpdateMFAPreference),
 		},
 		{

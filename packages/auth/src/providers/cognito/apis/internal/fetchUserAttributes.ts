@@ -8,32 +8,26 @@ import {
 	fetchAuthSession,
 } from '@aws-amplify/core/internals/utils';
 
-import { getRegionFromUserPoolId } from '../../../../foundation/parsers';
+import { getUser } from '../../utils/clients/CognitoIdentityProvider';
+import { getRegion } from '../../utils/clients/CognitoIdentityProvider/utils';
 import { assertAuthTokens } from '../../utils/types';
 import { FetchUserAttributesOutput } from '../../types';
 import { toAuthUserAttribute } from '../../utils/apiHelpers';
 import { getAuthUserAgentValue } from '../../../../utils';
-import { createGetUserClient } from '../../../../foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../../factories';
 
 export const fetchUserAttributes = async (
 	amplify: AmplifyClassV6,
 ): Promise<FetchUserAttributesOutput> => {
 	const authConfig = amplify.getConfig().Auth?.Cognito;
 	assertTokenProviderConfig(authConfig);
-	const { userPoolEndpoint, userPoolId } = authConfig;
 	const { tokens } = await fetchAuthSession(amplify, {
 		forceRefresh: false,
 	});
 	assertAuthTokens(tokens);
-	const getUser = createGetUserClient({
-		endpointResolver: createCognitoUserPoolEndpointResolver({
-			endpointOverride: userPoolEndpoint,
-		}),
-	});
+
 	const { UserAttributes } = await getUser(
 		{
-			region: getRegionFromUserPoolId(userPoolId),
+			region: getRegion(authConfig.userPoolId),
 			userAgentValue: getAuthUserAgentValue(AuthAction.FetchUserAttributes),
 		},
 		{

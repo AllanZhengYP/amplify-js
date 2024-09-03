@@ -7,13 +7,12 @@ import {
 	assertTokenProviderConfig,
 } from '@aws-amplify/core/internals/utils';
 
-import { getRegionFromUserPoolId } from '../../../foundation/parsers';
+import { deleteUserAttributes as deleteUserAttributesClient } from '../utils/clients/CognitoIdentityProvider';
+import { getRegion } from '../utils/clients/CognitoIdentityProvider/utils';
 import { assertAuthTokens } from '../utils/types';
 import { DeleteUserAttributesInput } from '../types';
 import { DeleteUserAttributesException } from '../types/errors';
 import { getAuthUserAgentValue } from '../../../utils';
-import { createDeleteUserAttributesClient } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../factories';
 
 /**
  * Deletes user attributes.
@@ -28,17 +27,11 @@ export async function deleteUserAttributes(
 	const authConfig = Amplify.getConfig().Auth?.Cognito;
 	assertTokenProviderConfig(authConfig);
 	const { userAttributeKeys } = input;
-	const { userPoolEndpoint, userPoolId } = authConfig;
 	const { tokens } = await fetchAuthSession({ forceRefresh: false });
 	assertAuthTokens(tokens);
-	const deleteUserAttributesClient = createDeleteUserAttributesClient({
-		endpointResolver: createCognitoUserPoolEndpointResolver({
-			endpointOverride: userPoolEndpoint,
-		}),
-	});
 	await deleteUserAttributesClient(
 		{
-			region: getRegionFromUserPoolId(userPoolId),
+			region: getRegion(authConfig.userPoolId),
 			userAgentValue: getAuthUserAgentValue(AuthAction.DeleteUserAttributes),
 		},
 		{

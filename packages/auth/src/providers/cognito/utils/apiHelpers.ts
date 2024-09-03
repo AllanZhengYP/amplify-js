@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AuthUserAttributes } from '../../../types';
-import { AttributeType } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider/types';
+
+import { AttributeType } from './clients/CognitoIdentityProvider/types';
 
 /**
  * Transforms a user attributes object into an array of AttributeType objects.

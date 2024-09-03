@@ -7,14 +7,13 @@ import {
 	assertTokenProviderConfig,
 } from '@aws-amplify/core/internals/utils';
 
+import { forgetDevice as serviceForgetDevice } from '../utils/clients/CognitoIdentityProvider';
 import { assertAuthTokens, assertDeviceMetadata } from '../utils/types';
-import { getRegionFromUserPoolId } from '../../../foundation/parsers';
+import { getRegion } from '../utils/clients/CognitoIdentityProvider/utils';
 import { tokenOrchestrator } from '../tokenProvider';
 import { ForgetDeviceInput } from '../types';
 import { ForgetDeviceException } from '../../cognito/types/errors';
 import { getAuthUserAgentValue } from '../../../utils';
-import { createForgetDeviceClient } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../factories';
 
 /**
  * Forget a remembered device while authenticated.
@@ -28,21 +27,17 @@ export async function forgetDevice(input?: ForgetDeviceInput): Promise<void> {
 	const { device: { id: externalDeviceKey } = { id: undefined } } = input ?? {};
 	const authConfig = Amplify.getConfig().Auth?.Cognito;
 	assertTokenProviderConfig(authConfig);
-	const { userPoolEndpoint, userPoolId } = authConfig;
+
 	const { tokens } = await fetchAuthSession();
 	assertAuthTokens(tokens);
 
 	const deviceMetadata = await tokenOrchestrator.getDeviceMetadata();
 	const currentDeviceKey = deviceMetadata?.deviceKey;
 	if (!externalDeviceKey) assertDeviceMetadata(deviceMetadata);
-	const serviceForgetDevice = createForgetDeviceClient({
-		endpointResolver: createCognitoUserPoolEndpointResolver({
-			endpointOverride: userPoolEndpoint,
-		}),
-	});
+
 	await serviceForgetDevice(
 		{
-			region: getRegionFromUserPoolId(userPoolId),
+			region: getRegion(authConfig.userPoolId),
 			userAgentValue: getAuthUserAgentValue(AuthAction.ForgetDevice),
 		},
 		{

@@ -16,14 +16,13 @@ import {
 	UpdateUserAttributesInput,
 	UpdateUserAttributesOutput,
 } from '../types';
+import { updateUserAttributes as updateUserAttributesClient } from '../utils/clients/CognitoIdentityProvider';
 import { assertAuthTokens } from '../utils/types';
-import { getRegionFromUserPoolId } from '../../../foundation/parsers';
+import { getRegion } from '../utils/clients/CognitoIdentityProvider/utils';
 import { toAttributeType } from '../utils/apiHelpers';
-import { CodeDeliveryDetailsType } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider/types';
+import { CodeDeliveryDetailsType } from '../utils/clients/CognitoIdentityProvider/types';
 import { UpdateUserAttributesException } from '../types/errors';
 import { getAuthUserAgentValue } from '../../../utils';
-import { createUpdateUserAttributesClient } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../factories';
 
 /**
  * Updates user's attributes while authenticated.
@@ -40,17 +39,11 @@ export const updateUserAttributes = async (
 	const authConfig = Amplify.getConfig().Auth?.Cognito;
 	const clientMetadata = options?.clientMetadata;
 	assertTokenProviderConfig(authConfig);
-	const { userPoolEndpoint, userPoolId } = authConfig;
 	const { tokens } = await fetchAuthSession({ forceRefresh: false });
 	assertAuthTokens(tokens);
-	const updateUserAttributesClient = createUpdateUserAttributesClient({
-		endpointResolver: createCognitoUserPoolEndpointResolver({
-			endpointOverride: userPoolEndpoint,
-		}),
-	});
 	const { CodeDeliveryDetailsList } = await updateUserAttributesClient(
 		{
-			region: getRegionFromUserPoolId(userPoolId),
+			region: getRegion(authConfig.userPoolId),
 			userAgentValue: getAuthUserAgentValue(AuthAction.UpdateUserAttributes),
 		},
 		{

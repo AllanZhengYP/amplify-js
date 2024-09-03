@@ -6,17 +6,14 @@ import { Amplify } from 'aws-amplify';
 import { signIn } from '../../../src/providers/cognito';
 import { signInWithSRP } from '../../../src/providers/cognito/apis/signInWithSRP';
 import * as initiateAuthHelpers from '../../../src/providers/cognito/utils/signInHelpers';
+import { RespondToAuthChallengeCommandOutput } from '../../../src/providers/cognito/utils/clients/CognitoIdentityProvider/types';
 import {
 	cognitoUserPoolsTokenProvider,
 	tokenOrchestrator,
 } from '../../../src/providers/cognito/tokenProvider';
 import { AuthError } from '../../../src';
 import { createKeysForAuthStorage } from '../../../src/providers/cognito/tokenProvider/TokenStore';
-import {
-	createInitiateAuthClient,
-	createRespondToAuthChallengeClient,
-} from '../../../src/foundation/factories/serviceClients/cognitoIdentityProvider';
-import { RespondToAuthChallengeCommandOutput } from '../../../src/foundation/factories/serviceClients/cognitoIdentityProvider/types';
+import * as clients from '../../../src/providers/cognito/utils/clients/CognitoIdentityProvider';
 
 import { authAPITestParams } from './testUtils/authApiTestParams';
 
@@ -36,9 +33,6 @@ jest.mock('@aws-amplify/core/internals/utils', () => ({
 	...jest.requireActual('@aws-amplify/core/internals/utils'),
 	isBrowser: jest.fn(() => false),
 }));
-jest.mock(
-	'../../../src/foundation/factories/serviceClients/cognitoIdentityProvider',
-);
 
 const authConfig = {
 	Cognito: {
@@ -199,17 +193,15 @@ describe('signIn API happy path cases', () => {
 	});
 
 	describe('sign in with device keys', () => {
-		const mockInitiateAuth = jest.fn();
-		const mockCreateInitiateAuthClient = jest.mocked(createInitiateAuthClient);
-		const mockRespondToAuthChallenge = jest.fn();
-		const mockCreateRespondToAuthChallengeClient = jest.mocked(
-			createRespondToAuthChallengeClient,
+		const initiateAuthSpy = jest.spyOn(clients, 'initiateAuth');
+		const respondToAuthChallengeAuthSpy = jest.spyOn(
+			clients,
+			'respondToAuthChallenge',
 		);
-
 		beforeEach(() => {
 			setDeviceKeys();
 			handleUserSRPAuthflowSpy.mockRestore();
-			mockInitiateAuth.mockResolvedValueOnce({
+			initiateAuthSpy.mockResolvedValueOnce({
 				ChallengeName: 'SRP_AUTH',
 				Session: '1234234232',
 				$metadata: {},
@@ -217,20 +209,14 @@ describe('signIn API happy path cases', () => {
 					USER_ID_FOR_SRP: lastAuthUser,
 				},
 			});
-			mockCreateInitiateAuthClient.mockReturnValueOnce(mockInitiateAuth);
-			mockRespondToAuthChallenge.mockResolvedValueOnce(
+			respondToAuthChallengeAuthSpy.mockResolvedValueOnce(
 				authAPITestParams.RespondToAuthChallengeCommandOutput,
-			);
-			mockCreateRespondToAuthChallengeClient.mockReturnValueOnce(
-				mockRespondToAuthChallenge,
 			);
 		});
 
 		afterEach(() => {
-			mockInitiateAuth.mockClear();
-			mockCreateInitiateAuthClient.mockClear();
-			mockRespondToAuthChallenge.mockClear();
-			mockCreateRespondToAuthChallengeClient.mockClear();
+			initiateAuthSpy.mockClear();
+			respondToAuthChallengeAuthSpy.mockClear();
 		});
 
 		test('respondToAuthChallenge should include device key in the request', async () => {
@@ -239,9 +225,9 @@ describe('signIn API happy path cases', () => {
 				password: 'XXXXXXXX',
 			});
 
-			expect(mockRespondToAuthChallenge).toHaveBeenCalledTimes(1);
+			expect(respondToAuthChallengeAuthSpy).toHaveBeenCalledTimes(1);
 			const deviceKeyFromRequest =
-				mockRespondToAuthChallenge.mock.calls[0][1].ChallengeResponses
+				respondToAuthChallengeAuthSpy.mock.calls[0][1].ChallengeResponses
 					?.DEVICE_KEY;
 			expect(deviceKeyFromRequest).toBe('mockedKey');
 		});
@@ -259,9 +245,9 @@ describe('signIn API happy path cases', () => {
 					password: 'XXXXXXXX',
 				});
 
-				expect(mockRespondToAuthChallenge).toHaveBeenCalledTimes(1);
+				expect(respondToAuthChallengeAuthSpy).toHaveBeenCalledTimes(1);
 				const deviceKeyFromRequest =
-					mockRespondToAuthChallenge.mock.calls[0][1].ChallengeResponses
+					respondToAuthChallengeAuthSpy.mock.calls[0][1].ChallengeResponses
 						?.DEVICE_KEY;
 				expect(deviceKeyFromRequest).toBe(undefined);
 			},
@@ -270,23 +256,22 @@ describe('signIn API happy path cases', () => {
 });
 
 describe('Cognito ASF', () => {
-	const mockInitiateAuth = jest.fn();
-	const mockCreateInitiateAuthClient = jest.mocked(createInitiateAuthClient);
+	let initiateAuthSpy: jest.SpyInstance;
 
 	beforeAll(() => {
 		jest.restoreAllMocks();
 	});
-
 	beforeEach(() => {
-		mockInitiateAuth.mockResolvedValueOnce({
-			ChallengeName: 'SRP_AUTH',
-			Session: '1234234232',
-			$metadata: {},
-			ChallengeParameters: {
-				USER_ID_FOR_SRP: authAPITestParams.user1.username,
-			},
-		});
-		mockCreateInitiateAuthClient.mockReturnValueOnce(mockInitiateAuth);
+		initiateAuthSpy = jest
+			.spyOn(clients, 'initiateAuth')
+			.mockImplementationOnce(async () => ({
+				ChallengeName: 'SRP_AUTH',
+				Session: '1234234232',
+				$metadata: {},
+				ChallengeParameters: {
+					USER_ID_FOR_SRP: authAPITestParams.user1.username,
+				},
+			}));
 		// load Cognito ASF polyfill
 		(window as any).AmazonCognitoAdvancedSecurityData = {
 			getData() {
@@ -296,8 +281,7 @@ describe('Cognito ASF', () => {
 	});
 
 	afterEach(() => {
-		mockInitiateAuth.mockClear();
-		mockCreateInitiateAuthClient.mockClear();
+		initiateAuthSpy.mockClear();
 		(window as any).AmazonCognitoAdvancedSecurityData = undefined;
 	});
 
@@ -310,7 +294,7 @@ describe('Cognito ASF', () => {
 		} catch (_) {
 			// only want to test the contents
 		}
-		expect(mockInitiateAuth).toHaveBeenCalledWith(
+		expect(initiateAuthSpy).toHaveBeenCalledWith(
 			expect.objectContaining({
 				region: 'us-west-2',
 			}),

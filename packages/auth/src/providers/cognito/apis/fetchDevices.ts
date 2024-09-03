@@ -8,13 +8,12 @@ import {
 } from '@aws-amplify/core/internals/utils';
 
 import { FetchDevicesOutput } from '../types';
-import { DeviceType } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider/types';
+import { listDevices } from '../utils/clients/CognitoIdentityProvider';
+import { DeviceType } from '../utils/clients/CognitoIdentityProvider/types';
 import { assertAuthTokens } from '../utils/types';
-import { getRegionFromUserPoolId } from '../../../foundation/parsers';
+import { getRegion } from '../utils/clients/CognitoIdentityProvider/utils';
 import { rememberDevice } from '..';
 import { getAuthUserAgentValue } from '../../../utils';
-import { createListDevicesClient } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../factories';
 
 // Cognito Documentation for max device
 // https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_ListDevices.html#API_ListDevices_RequestSyntax
@@ -31,17 +30,13 @@ const MAX_DEVICES = 60;
 export async function fetchDevices(): Promise<FetchDevicesOutput> {
 	const authConfig = Amplify.getConfig().Auth?.Cognito;
 	assertTokenProviderConfig(authConfig);
-	const { userPoolEndpoint, userPoolId } = authConfig;
+
 	const { tokens } = await fetchAuthSession();
 	assertAuthTokens(tokens);
-	const listDevices = createListDevicesClient({
-		endpointResolver: createCognitoUserPoolEndpointResolver({
-			endpointOverride: userPoolEndpoint,
-		}),
-	});
+
 	const response = await listDevices(
 		{
-			region: getRegionFromUserPoolId(userPoolId),
+			region: getRegion(authConfig.userPoolId),
 			userAgentValue: getAuthUserAgentValue(AuthAction.FetchDevices),
 		},
 		{

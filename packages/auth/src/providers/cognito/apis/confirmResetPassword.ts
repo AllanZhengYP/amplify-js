@@ -10,12 +10,11 @@ import {
 import { AuthValidationErrorCode } from '../../../errors/types/validation';
 import { assertValidationError } from '../../../errors/utils/assertValidationError';
 import { ConfirmResetPasswordInput } from '../types';
+import { confirmForgotPassword } from '../utils/clients/CognitoIdentityProvider';
+import { getRegion } from '../utils/clients/CognitoIdentityProvider/utils';
 import { ConfirmForgotPasswordException } from '../../cognito/types/errors';
 import { getAuthUserAgentValue } from '../../../utils';
 import { getUserContextData } from '../utils/userContextData';
-import { createConfirmForgotPasswordClient } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider';
-import { createCognitoUserPoolEndpointResolver } from '../factories';
-import { getRegionFromUserPoolId } from '../../../foundation/parsers';
 /**
  * Confirms the new password and verification code to reset the password.
  *
@@ -31,7 +30,7 @@ export async function confirmResetPassword(
 ): Promise<void> {
 	const authConfig = Amplify.getConfig().Auth?.Cognito;
 	assertTokenProviderConfig(authConfig);
-	const { userPoolClientId, userPoolId, userPoolEndpoint } = authConfig;
+	const { userPoolClientId, userPoolId } = authConfig;
 	const { username, newPassword } = input;
 	assertValidationError(
 		!!username,
@@ -54,14 +53,10 @@ export async function confirmResetPassword(
 		userPoolId,
 		userPoolClientId,
 	});
-	const confirmForgotPassword = createConfirmForgotPasswordClient({
-		endpointResolver: createCognitoUserPoolEndpointResolver({
-			endpointOverride: userPoolEndpoint,
-		}),
-	});
+
 	await confirmForgotPassword(
 		{
-			region: getRegionFromUserPoolId(authConfig.userPoolId),
+			region: getRegion(authConfig.userPoolId),
 			userAgentValue: getAuthUserAgentValue(AuthAction.ConfirmResetPassword),
 		},
 		{
