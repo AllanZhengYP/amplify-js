@@ -3,6 +3,7 @@
 
 import { Amplify } from '@aws-amplify/core';
 import { StorageAction } from '@aws-amplify/core/internals/utils';
+
 import { getProperties as getPropertiesBase } from '..//base/getProperties';
 import {
 	GetPropertiesWithPathInput as GetPropertiesGen2Input,
@@ -43,13 +44,16 @@ export async function getProperties(
 		config: {
 			credentialsProvider: credentials as any, // TODO: fix this
 			region,
-			customUserAgent: getStorageUserAgentValue(action ?? StorageAction.GetProperties),
+			userAgentValue: getStorageUserAgentValue(
+				action ?? StorageAction.GetProperties,
+			),
 		},
 	});
 	const result: GetPropertiesGen2Output = {
 		path: objectKey,
 		...response,
 	};
-	delete (result as any).key
+	delete (result as any).key;
+
 	return result;
 }
