@@ -1,9 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Amplify } from '@aws-amplify/core';
-
-import { downloadData as downloadDataInternal } from '../../providers/s3/apis/internal/remove';
+import { downloadData as downloadDataInternal } from '../../providers/s3/apis/internal/downloadData';
 import { DownloadDataInput } from '../types/inputs';
 import { DownloadDataOutput } from '../types/outputs';
 
@@ -39,10 +37,8 @@ import { DownloadDataOutput } from '../types/outputs';
  *
  * @internal
  */
-export const downloadData = (
-	input: DownloadDataInput,
-): Promise<DownloadDataOutput> =>
-	downloadDataInternal(Amplify, {
+export const downloadData = (input: DownloadDataInput): DownloadDataOutput =>
+	downloadDataInternal({
 		path: input.path,
 		options: {
 			useAccelerateEndpoint: input?.options?.useAccelerateEndpoint,
@@ -51,4 +47,4 @@ export const downloadData = (
 		},
 		// Type casting is necessary because `removeInternal` supports both Gen1 and Gen2 signatures, but here
 		// given in input can only be Gen2 signature, the return can only ben Gen2 signature.
-	}) as Promise<DownloadDataOutput>;
+	}) as DownloadDataOutput;
