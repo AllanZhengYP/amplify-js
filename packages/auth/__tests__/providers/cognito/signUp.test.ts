@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Amplify } from '@aws-amplify/core';
+
 import { signUp } from '../../../src/providers/cognito';
-import { signUp as providerSignUp } from '../../../src/providers/cognito/utils/clients/CognitoIdentityProvider';
-import { authAPITestParams } from './testUtils/authApiTestParams';
 import { AuthValidationErrorCode } from '../../../src/errors/types/validation';
 import { AuthError } from '../../../src/errors/AuthError';
 import { SignUpException } from '../../../src/providers/cognito/types/errors';
+import { createSignUpClient } from '../../../src/foundation/factories/serviceClients/cognitoIdentityProvider';
+import { createCognitoUserPoolEndpointResolver } from '../../../src/providers/cognito/factories';
+
+import { authAPITestParams } from './testUtils/authApiTestParams';
 import { getMockError } from './testUtils/data';
 import { setUpGetConfig } from './testUtils/setUpGetConfig';
 
@@ -19,19 +22,33 @@ jest.mock('@aws-amplify/core/internals/utils', () => ({
 	...jest.requireActual('@aws-amplify/core/internals/utils'),
 	isBrowser: jest.fn(() => false),
 }));
-jest.mock(
-	'../../../src/providers/cognito/utils/clients/CognitoIdentityProvider',
-);
 
-const userId = '1234567890';
+jest.mock(
+	'../../../src/foundation/factories/serviceClients/cognitoIdentityProvider',
+);
+jest.mock('../../../src/providers/cognito/factories');
 
 describe('signUp', () => {
+	const userId = '1234567890';
 	const { user1 } = authAPITestParams;
 	// assert mocks
-	const mockSignUp = providerSignUp as jest.Mock;
+	const mockSignUp = jest.fn();
+	const mockCreateSignUpClient = jest.mocked(createSignUpClient);
+	const mockCreateCognitoUserPoolEndpointResolver = jest.mocked(
+		createCognitoUserPoolEndpointResolver,
+	);
 
 	beforeAll(() => {
 		setUpGetConfig(Amplify);
+	});
+
+	beforeEach(() => {
+		mockCreateSignUpClient.mockReturnValueOnce(mockSignUp);
+	});
+
+	afterEach(() => {
+		mockCreateSignUpClient.mockClear();
+		mockCreateCognitoUserPoolEndpointResolver.mockClear();
 	});
 
 	describe('Happy Path Cases:', () => {
@@ -66,6 +83,31 @@ describe('signUp', () => {
 				},
 			);
 			expect(mockSignUp).toHaveBeenCalledTimes(1);
+		});
+
+		it('invokes mockCreateCognitoUserPoolEndpointResolver with expected endpointOverride', async () => {
+			const expectedUserPoolEndpoint = 'https://my-custom-endpoint.com';
+			jest.mocked(Amplify.getConfig).mockReturnValueOnce({
+				Auth: {
+					Cognito: {
+						userPoolClientId: '111111-aaaaa-42d8-891d-ee81a1549398',
+						userPoolId: 'us-west-2_zzzzz',
+						identityPoolId: 'us-west-2:xxxxxx',
+						userPoolEndpoint: expectedUserPoolEndpoint,
+					},
+				},
+			});
+			await signUp({
+				username: user1.username,
+				password: user1.password,
+				options: {
+					userAttributes: { email: user1.email },
+				},
+			});
+
+			expect(mockCreateCognitoUserPoolEndpointResolver).toHaveBeenCalledWith({
+				endpointOverride: expectedUserPoolEndpoint,
+			});
 		});
 
 		it('should return `CONFIRM_SIGN_UP` step when user isn`t confirmed yet', async () => {
@@ -169,6 +211,38 @@ describe('signUp', () => {
 				},
 				userId,
 			});
+		});
+
+		it('should send UserContextData', async () => {
+			(window as any).AmazonCognitoAdvancedSecurityData = {
+				getData() {
+					return 'abcd';
+				},
+			};
+			await signUp({
+				username: user1.username,
+				password: user1.password,
+				options: {
+					userAttributes: { email: user1.email },
+				},
+			});
+			expect(mockSignUp).toHaveBeenCalledWith(
+				{
+					region: 'us-west-2',
+					userAgentValue: expect.any(String),
+				},
+				{
+					ClientMetadata: undefined,
+					Password: user1.password,
+					UserAttributes: [{ Name: 'email', Value: user1.email }],
+					Username: user1.username,
+					ValidationData: undefined,
+					ClientId: '111111-aaaaa-42d8-891d-ee81a1549398',
+					UserContextData: { EncodedData: 'abcd' },
+				},
+			);
+			expect(mockSignUp).toHaveBeenCalledTimes(1);
+			(window as any).AmazonCognitoAdvancedSecurityData = undefined;
 		});
 	});
 

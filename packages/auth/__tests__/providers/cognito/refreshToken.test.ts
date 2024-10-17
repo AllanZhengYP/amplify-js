@@ -1,21 +1,40 @@
 import { decodeJWT } from '@aws-amplify/core/internals/utils';
+
 import { refreshAuthTokens } from '../../../src/providers/cognito/utils/refreshAuthTokens';
 import { CognitoAuthTokens } from '../../../src/providers/cognito/tokenProvider/types';
-import { initiateAuth } from '../../../src/providers/cognito/utils/clients/CognitoIdentityProvider';
-import { mockAccessToken, mockRequestId } from './testUtils/data';
 import {
 	oAuthTokenRefreshException,
 	tokenRefreshException,
 } from '../../../src/providers/cognito/utils/types';
+import { createInitiateAuthClient } from '../../../src/foundation/factories/serviceClients/cognitoIdentityProvider';
+import { createCognitoUserPoolEndpointResolver } from '../../../src/providers/cognito/factories';
+
+import { mockAccessToken, mockRequestId } from './testUtils/data';
+
 jest.mock(
-	'../../../src/providers/cognito/utils/clients/CognitoIdentityProvider',
+	'../../../src/foundation/factories/serviceClients/cognitoIdentityProvider',
+);
+jest.mock('../../../src/providers/cognito/factories');
+
+const mockCreateInitiateAuthClient = jest.mocked(createInitiateAuthClient);
+const mockCreateCognitoUserPoolEndpointResolver = jest.mocked(
+	createCognitoUserPoolEndpointResolver,
 );
 
 describe('refreshToken', () => {
 	const mockedUsername = 'mockedUsername';
 	const mockedRefreshToken = 'mockedRefreshToken';
-	// assert mocks
-	const mockInitiateAuth = initiateAuth as jest.Mock;
+	const mockInitiateAuth = jest.fn();
+
+	beforeEach(() => {
+		mockCreateInitiateAuthClient.mockReturnValueOnce(mockInitiateAuth);
+	});
+
+	afterEach(() => {
+		mockCreateInitiateAuthClient.mockClear();
+		mockCreateCognitoUserPoolEndpointResolver.mockClear();
+	});
+
 	describe('positive cases', () => {
 		beforeEach(() => {
 			mockInitiateAuth.mockResolvedValue({
@@ -80,7 +99,7 @@ describe('refreshToken', () => {
 		});
 
 		it('should send UserContextData', async () => {
-			window['AmazonCognitoAdvancedSecurityData'] = {
+			(window as any).AmazonCognitoAdvancedSecurityData = {
 				getData() {
 					return 'abcd';
 				},
@@ -114,7 +133,40 @@ describe('refreshToken', () => {
 					UserContextData: { EncodedData: 'abcd' },
 				}),
 			);
-			window['AmazonCognitoAdvancedSecurityData'] = undefined;
+			(window as any).AmazonCognitoAdvancedSecurityData = undefined;
+		});
+
+		it('invokes mockCreateCognitoUserPoolEndpointResolver with expected parameters', async () => {
+			const expectedParam = 'https://my-custom-endpoint.com';
+			const expectedEndpointResolver = jest.fn();
+			mockCreateCognitoUserPoolEndpointResolver.mockReturnValueOnce(
+				expectedEndpointResolver,
+			);
+
+			await refreshAuthTokens({
+				username: 'username',
+				tokens: {
+					accessToken: { payload: {} },
+					idToken: { payload: {} },
+					clockDrift: 0,
+					refreshToken: 'refreshtoken',
+					username: 'username',
+				},
+				authConfig: {
+					Cognito: {
+						userPoolId: 'us-east-1_aaaaaaa',
+						userPoolClientId: 'aaaaaaaaaaaa',
+						userPoolEndpoint: expectedParam,
+					},
+				},
+			});
+
+			expect(mockCreateCognitoUserPoolEndpointResolver).toHaveBeenCalledWith({
+				endpointOverride: expectedParam,
+			});
+			expect(mockCreateInitiateAuthClient).toHaveBeenCalledWith({
+				endpointResolver: expectedEndpointResolver,
+			});
 		});
 	});
 
@@ -150,11 +202,11 @@ describe('refreshToken', () => {
 				}),
 			).rejects.toThrow(oAuthTokenRefreshException);
 		});
+
 		it('should throw an exception when cognito tokens are not available', async () => {
 			await expect(
 				refreshAuthTokens({
-					// @ts-ignore
-					tokens: {},
+					tokens: {} as any,
 					authConfig: {
 						Cognito: {
 							userPoolId: 'us-east-1_aaaaaaa',

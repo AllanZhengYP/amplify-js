@@ -39,7 +39,9 @@
 		"**/.rollup.cache",
 		"**/rollup.config.mjs",
 		"rollup",
-		".husky"
+		".husky",
+		"eslint.config.mjs",
+		"packages/core/metadata"
 	],
 	"ignoreFile": ".gitignore",
 	"license": "license_header.txt",

@@ -24,7 +24,7 @@ describe('oAuthSignOutRedirect', () => {
 				domain,
 				redirectSignIn: ['https://myapp.test/completeSignIn/'],
 				redirectSignOut: [signOutRedirectUrl],
-				responseType: 'code' as 'code', // assert string union instead of string type
+				responseType: 'code' as const, // assert string union instead of string type
 				scopes: [],
 			},
 		},
@@ -47,6 +47,7 @@ describe('oAuthSignOutRedirect', () => {
 
 		expect(mockGetRedirectUrl).toHaveBeenCalledWith(
 			authConfig.loginWith.oauth.redirectSignOut,
+			undefined,
 		);
 		expect(mockOpenAuthSession).toHaveBeenCalledWith(
 			`https://${domain}/logout?client_id=${userPoolClientId}&logout_uri=${encodedSignOutRedirectUrl}`,

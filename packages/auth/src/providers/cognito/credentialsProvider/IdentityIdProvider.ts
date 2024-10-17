@@ -5,20 +5,19 @@ import { AuthTokens, ConsoleLogger, Identity, getId } from '@aws-amplify/core';
 import { CognitoIdentityPoolConfig } from '@aws-amplify/core/internals/utils';
 
 import { AuthError } from '../../../errors/AuthError';
-import { getRegionFromIdentityPoolId } from '../utils/clients/CognitoIdentityProvider/utils';
+import { getRegionFromIdentityPoolId } from '../../../foundation/parsers';
 import { GetIdException } from '../types/errors';
 
 import { IdentityIdStore } from './types';
 import { formLoginsMap } from './utils';
 
 const logger = new ConsoleLogger('CognitoIdentityIdProvider');
-
 /**
  * Provides a Cognito identityId
  *
  * @param tokens - The AuthTokens received after SignIn
  * @returns string
- * @throws configuration exceptions: {@link InvalidIdentityPoolIdException }
+ * @throws configuration exceptions: `InvalidIdentityPoolIdException`
  *  - Auth errors that may arise from misconfiguration.
  * @throws service exceptions: {@link GetIdException }
  */

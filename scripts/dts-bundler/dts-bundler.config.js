@@ -13,8 +13,7 @@ const baseTsConfigPath = join(
 	__dirname,
 	'..',
 	'..',
-	'packages',
-	'tsconfig.base.json',
+	'tsconfig.json',
 );
 const corePackageSrcClientsPath = join(
 	__dirname,
@@ -44,11 +43,14 @@ const authPackageSrcClientsPath = join(
 	'packages',
 	'auth',
 	'src',
-	'providers',
-	'cognito',
-	'utils',
-	'clients',
+	'foundation',
+	'factories',
+	'serviceClients',
+	'cognitoIdentityProvider',
+	'types',
 );
+
+// packages/auth/src/foundation/factories/serviceClients/cognitoIdentityProvider/types/Sdk.ts
 
 /** @type import('dts-bundle-generator/config-schema').BundlerConfig */
 const config = {
@@ -84,8 +86,7 @@ const config = {
 			filePath: './cognito-identity-provider.d.ts',
 			outFile: join(
 				authPackageSrcClientsPath,
-				'CognitoIdentityProvider',
-				'types.ts',
+				'sdk.ts',
 			),
 			libraries: {
 				inlinedLibraries: ['@aws-sdk/client-cognito-identity-provider'],

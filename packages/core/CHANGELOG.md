@@ -3,6 +3,86 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [6.4.5](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.4.4...@aws-amplify/core@6.4.5) (2024-10-15)
+
+### Bug Fixes
+
+- Update useragent string with npm version ([#13903](https://github.com/aws-amplify/amplify-js/issues/13903)) ([541e463](https://github.com/aws-amplify/amplify-js/commit/541e46347ba10cd1cfc0bf080c9a45281cf0be4e))
+
+## [6.4.4](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.4.3...@aws-amplify/core@6.4.4) (2024-10-05)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+## [6.4.3](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.4.2...@aws-amplify/core@6.4.3) (2024-09-30)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+## [6.4.2](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.4.1...@aws-amplify/core@6.4.2) (2024-09-17)
+
+### Reverts
+
+- Revert "Reapply "feat(core): resolve webcrypto from node:crypto for Node18 (#13599)" (#13775)" ([953d578](https://github.com/aws-amplify/amplify-js/commit/953d578fabd69ab8eb7bf494a50c5a15ebf0b74c)), closes [#13599](https://github.com/aws-amplify/amplify-js/issues/13599) [#13775](https://github.com/aws-amplify/amplify-js/issues/13775)
+
+## [6.4.1](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.4.0...@aws-amplify/core@6.4.1) (2024-09-16)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+# [6.4.0](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.13...@aws-amplify/core@6.4.0) (2024-09-04)
+
+### Features
+
+- **api-graphql:** pass authToken via subprotocol ([#13727](https://github.com/aws-amplify/amplify-js/issues/13727)) ([ced891c](https://github.com/aws-amplify/amplify-js/commit/ced891c2e4f6b0f1fdeaf44ab80cae9d585b6d15))
+
+## [6.3.13](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.12...@aws-amplify/core@6.3.13) (2024-09-03)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+## [6.3.12](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.11...@aws-amplify/core@6.3.12) (2024-08-26)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+## [6.3.11](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.10...@aws-amplify/core@6.3.11) (2024-08-21)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+## [6.3.10](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.9...@aws-amplify/core@6.3.10) (2024-08-15)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+## [6.3.9](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.8...@aws-amplify/core@6.3.9) (2024-08-07)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+## [6.3.8](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.7...@aws-amplify/core@6.3.8) (2024-08-05)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+## [6.3.7](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.6...@aws-amplify/core@6.3.7) (2024-07-23)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+## [6.3.6](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.5...@aws-amplify/core@6.3.6) (2024-07-22)
+
+### Bug Fixes
+
+- **aws-amplify:** createKeyValueStorageFromCookieStorageAdapter misses default path and secure values ([#13508](https://github.com/aws-amplify/amplify-js/issues/13508)) ([60a559f](https://github.com/aws-amplify/amplify-js/commit/60a559f612e092c76e1499f93547248312db46f2))
+
+## [6.3.5](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.4...@aws-amplify/core@6.3.5) (2024-07-19)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+## [6.3.4](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.3...@aws-amplify/core@6.3.4) (2024-07-08)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+## [6.3.3](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.2...@aws-amplify/core@6.3.3) (2024-06-24)
+
+**Note:** Version bump only for package @aws-amplify/core
+
+## [6.3.2](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.1...@aws-amplify/core@6.3.2) (2024-06-07)
+
+**Note:** Version bump only for package @aws-amplify/core
+
 ## [6.3.1](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.3.0...@aws-amplify/core@6.3.1) (2024-05-23)
 
 **Note:** Version bump only for package @aws-amplify/core

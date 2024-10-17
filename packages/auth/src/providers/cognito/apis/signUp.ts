@@ -10,11 +10,10 @@ import {
 
 import { AuthDeliveryMedium } from '../../../types';
 import { SignInInput, SignUpInput, SignUpOutput } from '../types';
-import { signUp as signUpClient } from '../utils/clients/CognitoIdentityProvider';
 import { assertValidationError } from '../../../errors/utils/assertValidationError';
 import { AuthValidationErrorCode } from '../../../errors/types/validation';
 import { SignUpException } from '../types/errors';
-import { getRegion } from '../utils/clients/CognitoIdentityProvider/utils';
+import { getRegionFromUserPoolId } from '../../../foundation/parsers';
 import { toAttributeType } from '../utils/apiHelpers';
 import {
 	autoSignInUserConfirmed,
@@ -25,7 +24,10 @@ import {
 	setAutoSignInStarted,
 	setUsernameUsedForAutoSignIn,
 } from '../utils/signUpHelpers';
+import { getUserContextData } from '../utils/userContextData';
 import { getAuthUserAgentValue } from '../../../utils';
+import { createSignUpClient } from '../../../foundation/factories/serviceClients/cognitoIdentityProvider';
+import { createCognitoUserPoolEndpointResolver } from '../factories';
 
 import { setAutoSignIn } from './autoSignIn';
 
@@ -62,7 +64,6 @@ export async function signUp(input: SignUpInput): Promise<SignUpOutput> {
 		username,
 		options: signInServiceOptions,
 	};
-
 	// if the authFlowType is 'CUSTOM_WITHOUT_SRP' then we don't include the password
 	if (signInServiceOptions?.authFlowType !== 'CUSTOM_WITHOUT_SRP') {
 		signInInput.password = password;
@@ -71,9 +72,16 @@ export async function signUp(input: SignUpInput): Promise<SignUpOutput> {
 		setUsernameUsedForAutoSignIn(username);
 		setAutoSignInStarted(true);
 	}
+
+	const { userPoolId, userPoolClientId, userPoolEndpoint } = authConfig;
+	const signUpClient = createSignUpClient({
+		endpointResolver: createCognitoUserPoolEndpointResolver({
+			endpointOverride: userPoolEndpoint,
+		}),
+	});
 	const clientOutput = await signUpClient(
 		{
-			region: getRegion(authConfig.userPoolId),
+			region: getRegionFromUserPoolId(userPoolId),
 			userAgentValue: getAuthUserAgentValue(AuthAction.SignUp),
 		},
 		{
@@ -83,7 +91,12 @@ export async function signUp(input: SignUpInput): Promise<SignUpOutput> {
 				options?.userAttributes && toAttributeType(options?.userAttributes),
 			ClientMetadata: clientMetadata,
 			ValidationData: validationData && toAttributeType(validationData),
-			ClientId: authConfig.userPoolClientId,
+			ClientId: userPoolClientId,
+			UserContextData: getUserContextData({
+				username,
+				userPoolId,
+				userPoolClientId,
+			}),
 		},
 	);
 	const { UserSub, CodeDeliveryDetails } = clientOutput;

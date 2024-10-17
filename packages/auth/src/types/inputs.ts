@@ -47,6 +47,9 @@ export interface AuthSignInInput<
 }
 export interface AuthSignOutInput {
 	global: boolean;
+	oauth?: {
+		redirectUrl?: string;
+	};
 }
 
 export type AuthProvider = 'Amazon' | 'Apple' | 'Facebook' | 'Google';
@@ -98,10 +101,11 @@ export interface AuthConfirmSignUpInput<
 	confirmationCode: string;
 	options?: ServiceOptions;
 }
+
 /**
  * Constructs a `confirmSignIn` input.
  *
- * @param challengeResponse - required parameter for responding to {@link AuthSignInStep } returned during
+ * @param challengeResponse - required parameter for responding to `AuthSignInStep` returned during
  * the sign in process.
  * @param options - optional parameters for the Confirm Sign In process such as the service options
  */
