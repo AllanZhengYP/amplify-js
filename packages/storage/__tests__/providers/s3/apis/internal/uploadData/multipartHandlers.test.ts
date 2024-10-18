@@ -14,27 +14,27 @@ import {
 	headObject,
 	listParts,
 	uploadPart,
-} from '../../../../../src/providers/s3/utils/client/s3data';
-import { getMultipartUploadHandlers } from '../../../../../src/providers/s3/apis/internal/uploadData/multipart';
+} from '../../../../../../src/providers/s3/utils/client/s3data';
+import { getMultipartUploadHandlers } from '../../../../../../src/providers/s3/apis/internal/uploadData/multipart';
 import {
 	StorageValidationErrorCode,
 	validationErrorMap,
-} from '../../../../../src/errors/types/validation';
-import { UPLOADS_STORAGE_KEY } from '../../../../../src/providers/s3/utils/constants';
-import { byteLength } from '../../../../../src/providers/s3/apis/internal/uploadData/byteLength';
-import { CanceledError } from '../../../../../src/errors/CanceledError';
-import { StorageOptions } from '../../../../../src/types';
+} from '../../../../../../src/errors/types/validation';
+import { UPLOADS_STORAGE_KEY } from '../../../../../../src/providers/s3/utils/constants';
+import { byteLength } from '../../../../../../src/providers/s3/apis/internal/uploadData/byteLength';
+import { CanceledError } from '../../../../../../src/errors/CanceledError';
+import { StorageOptions } from '../../../../../../src/types';
 import '../testUtils';
-import { calculateContentCRC32 } from '../../../../../src/providers/s3/utils/crc32';
-import { calculateContentMd5 } from '../../../../../src/providers/s3/utils';
+import { calculateContentCRC32 } from '../../../../../../src/providers/s3/utils/crc32';
+import { calculateContentMd5 } from '../../../../../../src/providers/s3/utils';
 
 global.Blob = BlobPolyfill as any;
 global.File = FilePolyfill as any;
 global.WritableStream = WritableStreamPolyfill as any;
 
 jest.mock('@aws-amplify/core');
-jest.mock('../../../../../src/providers/s3/utils/client/s3data');
-jest.mock('../../../../../src/providers/s3/utils/crc32');
+jest.mock('../../../../../../src/providers/s3/utils/client/s3data');
+jest.mock('../../../../../../src/providers/s3/utils/crc32');
 
 const credentials: AWSCredentials = {
 	accessKeyId: 'accessKeyId',
@@ -63,8 +63,8 @@ const disableAssertionFlag = true;
 
 const MB = 1024 * 1024;
 
-jest.mock('../../../../../src/providers/s3/utils', () => ({
-	...jest.requireActual('../../../../../src/providers/s3/utils'),
+jest.mock('../../../../../../src/providers/s3/utils', () => ({
+	...jest.requireActual('../../../../../../src/providers/s3/utils'),
 	calculateContentMd5: jest.fn(),
 }));
 
@@ -90,7 +90,7 @@ const mockCalculateContentCRC32Undefined = () => {
 const mockCalculateContentCRC32Reset = () => {
 	mockCalculateContentCRC32.mockReset();
 	mockCalculateContentCRC32.mockImplementation(
-		jest.requireActual('../../../../../src/providers/s3/utils/crc32')
+		jest.requireActual('../../../../../../src/providers/s3/utils/crc32')
 			.calculateContentCRC32,
 	);
 };

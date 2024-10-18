@@ -10,19 +10,19 @@ import { Amplify } from '@aws-amplify/core';
 import {
 	headObject,
 	putObject,
-} from '../../../../../src/providers/s3/utils/client/s3data';
-import { calculateContentMd5 } from '../../../../../src/providers/s3/utils';
-import * as CRC32 from '../../../../../src/providers/s3/utils/crc32';
-import { putObjectJob } from '../../../../../src/providers/s3/apis/internal/uploadData/putObjectJob';
+} from '../../../../../../src/providers/s3/utils/client/s3data';
+import { calculateContentMd5 } from '../../../../../../src/providers/s3/utils';
+import * as CRC32 from '../../../../../../src/providers/s3/utils/crc32';
+import { putObjectJob } from '../../../../../../src/providers/s3/apis/internal/uploadData/putObjectJob';
 import '../testUtils';
 
 global.Blob = BlobPolyfill as any;
 global.File = FilePolyfill as any;
 global.WritableStream = WritableStreamPolyfill as any;
 
-jest.mock('../../../../../src/providers/s3/utils/client/s3data');
-jest.mock('../../../../../src/providers/s3/utils', () => {
-	const utils = jest.requireActual('../../../../../src/providers/s3/utils');
+jest.mock('../../../../../../src/providers/s3/utils/client/s3data');
+jest.mock('../../../../../../src/providers/s3/utils', () => {
+	const utils = jest.requireActual('../../../../../../src/providers/s3/utils');
 
 	return {
 		...utils,
