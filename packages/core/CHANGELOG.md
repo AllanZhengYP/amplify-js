@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [6.6.0](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.5.3...@aws-amplify/core@6.6.0) (2024-11-19)
+
+### Bug Fixes
+
+- **core:** support endpoint resolver accepting both input and config([#13985](https://github.com/aws-amplify/amplify-js/issues/13985)) ([c86f3ba](https://github.com/aws-amplify/amplify-js/commit/c86f3ba2ccba4310531de5cb25bc0f6a78082b79))
+
+### Features
+
+- Implement getLocationCredentials handler & integrate with adapter ([#13600](https://github.com/aws-amplify/amplify-js/issues/13600)) ([e44d290](https://github.com/aws-amplify/amplify-js/commit/e44d290313a4b2f7443d55380282193499a7abde))
+- **storage:** implement listLocations API and creation handler ([#13602](https://github.com/aws-amplify/amplify-js/issues/13602)) ([a8f8e6e](https://github.com/aws-amplify/amplify-js/commit/a8f8e6e747e40e3efc9ea4e08c549a79132b8c95))
+- **storage:** support force refresh location credentials ([#13589](https://github.com/aws-amplify/amplify-js/issues/13589)) ([ed29226](https://github.com/aws-amplify/amplify-js/commit/ed29226194d72e8fcf6f756f3f0e6caf9e82dbeb))
+
 ## [6.5.3](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/core@6.5.2...@aws-amplify/core@6.5.3) (2024-11-13)
 
 **Note:** Version bump only for package @aws-amplify/core

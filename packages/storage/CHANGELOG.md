@@ -3,6 +3,64 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [6.7.0](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/storage@6.6.16...@aws-amplify/storage@6.7.0) (2024-11-19)
+
+### Bug Fixes
+
+- add license ([2736726](https://github.com/aws-amplify/amplify-js/commit/2736726b1ece76123caacc8a18e384cc079d2e97))
+- **core:** support endpoint resolver accepting both input and config([#13985](https://github.com/aws-amplify/amplify-js/issues/13985)) ([c86f3ba](https://github.com/aws-amplify/amplify-js/commit/c86f3ba2ccba4310531de5cb25bc0f6a78082b79))
+- multipart upload storage crc32 integrity ([#13878](https://github.com/aws-amplify/amplify-js/issues/13878)) ([1eab7e0](https://github.com/aws-amplify/amplify-js/commit/1eab7e005416d09f5d40df89ddc4aa4f54592b3b))
+- **storage-browser:** listCallerAccessGrantsDeserializer not parsing multiple AccessGrant instances ([#13671](https://github.com/aws-amplify/amplify-js/issues/13671)) ([08ef01b](https://github.com/aws-amplify/amplify-js/commit/08ef01bef53c2baeefd8a01652f44ff099af015a))
+- **storage-browser:** missing error wrapping for s3 control responses ([#13779](https://github.com/aws-amplify/amplify-js/issues/13779)) ([36607e8](https://github.com/aws-amplify/amplify-js/commit/36607e8a89acd7df60959cb0a00762d89ba28634))
+- **storage:** export storage-browser types for TS v4.2+ ([#13647](https://github.com/aws-amplify/amplify-js/issues/13647)) ([9ba6782](https://github.com/aws-amplify/amplify-js/commit/9ba67823d9b33efb13058be6ea45adbc95bc1aed))
+- **storage:** internals list function not able to decide which output types to use ([#13915](https://github.com/aws-amplify/amplify-js/issues/13915)) ([2cc870c](https://github.com/aws-amplify/amplify-js/commit/2cc870ccdb8b5f26f6e993a79772571bdeba73a8))
+
+### Features
+
+- Add expectedBucketOwner to remaining internal APIs ([#13932](https://github.com/aws-amplify/amplify-js/issues/13932)) ([2a9053f](https://github.com/aws-amplify/amplify-js/commit/2a9053f797decf58798d2a101970e906241f249a))
+- adding object url checks ([#13810](https://github.com/aws-amplify/amplify-js/issues/13810)) ([7876916](https://github.com/aws-amplify/amplify-js/commit/787691659998204c80c5181051e87e0c302379ad))
+- allow setting encoding type for list calls ([f7dbcdf](https://github.com/aws-amplify/amplify-js/commit/f7dbcdf0ac80441898a90e1a83cd7994169469a2))
+- Implement getLocationCredentials handler & integrate with adapter ([#13600](https://github.com/aws-amplify/amplify-js/issues/13600)) ([e44d290](https://github.com/aws-amplify/amplify-js/commit/e44d290313a4b2f7443d55380282193499a7abde))
+- introduce CRC32 checksums to storage:uploadData API ([#13649](https://github.com/aws-amplify/amplify-js/issues/13649)) ([a06c2f9](https://github.com/aws-amplify/amplify-js/commit/a06c2f99c5564546dd412691ca4f3c6500d2b306))
+- optional checksum algorithm for upload ([#13849](https://github.com/aws-amplify/amplify-js/issues/13849)) ([02cb08a](https://github.com/aws-amplify/amplify-js/commit/02cb08af611e57a0ae33a04df56993488e9108d9))
+- optional checksum algorithm for upload ([#13939](https://github.com/aws-amplify/amplify-js/issues/13939)) ([873a446](https://github.com/aws-amplify/amplify-js/commit/873a44622f8cc2a8060d73b6ded03ff3f70cbd15))
+- preventOverwrite with if-none-match header ([#13954](https://github.com/aws-amplify/amplify-js/issues/13954)) ([bb4e0a3](https://github.com/aws-amplify/amplify-js/commit/bb4e0a3962bb9c89ccc56d707631ebb6249e9e92))
+- **storage:** add advanced option to disable upload cache ([#13931](https://github.com/aws-amplify/amplify-js/issues/13931)) ([5145064](https://github.com/aws-amplify/amplify-js/commit/51450645a9d6a0aef93144cdda42a5bf07cf9ebe))
+- **storage:** add an adapter interface for storage browser ([#13576](https://github.com/aws-amplify/amplify-js/issues/13576)) ([335315a](https://github.com/aws-amplify/amplify-js/commit/335315a3265697b80092325837b4c1fec6cd38a5))
+- **storage:** Add API support for Expected Bucket Owner ([#13914](https://github.com/aws-amplify/amplify-js/issues/13914)) ([96c2dc7](https://github.com/aws-amplify/amplify-js/commit/96c2dc73d412599a2a4b3a79c9f6c3842333a12f))
+- **storage:** add base types for storage browser ([#13528](https://github.com/aws-amplify/amplify-js/issues/13528)) ([3fc169e](https://github.com/aws-amplify/amplify-js/commit/3fc169e2044cf83ed7acb839fb46c32324c6f372))
+- **storage:** add cred store creation implementation ([#13575](https://github.com/aws-amplify/amplify-js/issues/13575)) ([084b4ff](https://github.com/aws-amplify/amplify-js/commit/084b4ff078211397eb99055d59c03982acf44467))
+- **storage:** add cred store lru implementation ([#13561](https://github.com/aws-amplify/amplify-js/issues/13561)) ([6f17f6c](https://github.com/aws-amplify/amplify-js/commit/6f17f6cbb88067bea6a03a8814b1abc568251460))
+- **storage:** add creds store scaffolding and update types ([#13558](https://github.com/aws-amplify/amplify-js/issues/13558)) ([401dbc7](https://github.com/aws-amplify/amplify-js/commit/401dbc7634ceba5bdd333100496936ea8e4bab3d))
+- **storage:** add customEndpoint to internal apis in advanced options ([#13961](https://github.com/aws-amplify/amplify-js/issues/13961)) ([c12f2e0](https://github.com/aws-amplify/amplify-js/commit/c12f2e0971031ecf3a6d49c58c7cf5c271fb4d19))
+- **storage:** add delimiter support ([#13480](https://github.com/aws-amplify/amplify-js/issues/13480)) ([92e6347](https://github.com/aws-amplify/amplify-js/commit/92e63479a7adae728cb2d6b06ff80dfec7bc510a))
+- **storage:** add new internal downloadData api ([#13887](https://github.com/aws-amplify/amplify-js/issues/13887)) ([7318ba2](https://github.com/aws-amplify/amplify-js/commit/7318ba2b09a8d980fd46a6fd12b8b9b5d85c536d))
+- **storage:** add new internal remove api ([#13880](https://github.com/aws-amplify/amplify-js/issues/13880)) ([1c5fc0f](https://github.com/aws-amplify/amplify-js/commit/1c5fc0f1b0a871ebac3c43234ff6516346c56237))
+- **storage:** add remaining copy changes for internals ([#13889](https://github.com/aws-amplify/amplify-js/issues/13889)) ([0bca04a](https://github.com/aws-amplify/amplify-js/commit/0bca04a7e304a0301e16438059a5bc4d8fef40ef))
+- **storage:** add support for conditional headers to copy, and validate serialization ([#13772](https://github.com/aws-amplify/amplify-js/issues/13772)) ([48910bd](https://github.com/aws-amplify/amplify-js/commit/48910bd6c4e862b4ab886d8b3705f836709ec10f))
+- **storage:** Added getDataAccess & listCallerAccessGrant clients ([#13582](https://github.com/aws-amplify/amplify-js/issues/13582)) ([bcd8c9d](https://github.com/aws-amplify/amplify-js/commit/bcd8c9d3558cfeca91475160b29766e0513f9422))
+- **storage:** allow checksum algo for internal upload API ([#14002](https://github.com/aws-amplify/amplify-js/issues/14002)) ([405b2cc](https://github.com/aws-amplify/amplify-js/commit/405b2cc66dc630dbfd36e8dc4a7c897dae99d87c))
+- **storage:** enables location credentials provider ([#13605](https://github.com/aws-amplify/amplify-js/issues/13605)) ([c5464ac](https://github.com/aws-amplify/amplify-js/commit/c5464ac4c8962d365853c3c7d0d41aaca9881bf8))
+- **storage:** export Default Part Size constant ([#13851](https://github.com/aws-amplify/amplify-js/issues/13851)) ([f60257b](https://github.com/aws-amplify/amplify-js/commit/f60257b97aebab82ed0efc62861f7ba5d0001faf))
+- **storage:** implement listLocations API and creation handler ([#13602](https://github.com/aws-amplify/amplify-js/issues/13602)) ([a8f8e6e](https://github.com/aws-amplify/amplify-js/commit/a8f8e6e747e40e3efc9ea4e08c549a79132b8c95))
+- **storage:** internal GetProperties API ([#13869](https://github.com/aws-amplify/amplify-js/issues/13869)) ([287d0e5](https://github.com/aws-amplify/amplify-js/commit/287d0e5157363eccbc498287cc2f0011ecb81918))
+- **storage:** internal uploadData implementation ([#13888](https://github.com/aws-amplify/amplify-js/issues/13888)) ([fb4237b](https://github.com/aws-amplify/amplify-js/commit/fb4237b2e263cd7934d2dd2d96f42a19e26c74cf))
+- **storage:** internals list API ([#13874](https://github.com/aws-amplify/amplify-js/issues/13874)) ([20f62a6](https://github.com/aws-amplify/amplify-js/commit/20f62a60f23f4dd456488d98bfc9f56c73b4dddf))
+- **storage:** introduce preventOverwrite option to uploadData via HeadObject ([#13640](https://github.com/aws-amplify/amplify-js/issues/13640)) ([0b1ec2e](https://github.com/aws-amplify/amplify-js/commit/0b1ec2e4a00098caadf4f509e7821b5aa00cdc4a))
+- **storage:** require temporary creds for storage browser interfaces ([#13664](https://github.com/aws-amplify/amplify-js/issues/13664)) ([30404f4](https://github.com/aws-amplify/amplify-js/commit/30404f44e57cc4586b559de8577892c290889866))
+- **storage:** resolve merge issue with multibucket ([6e5b3c5](https://github.com/aws-amplify/amplify-js/commit/6e5b3c58fe2d1c3e01eed99fd53036ddeb075a35))
+- **storage:** set allowedByApp to listCallerAccessGrants ([#13934](https://github.com/aws-amplify/amplify-js/issues/13934)) ([05ef3d8](https://github.com/aws-amplify/amplify-js/commit/05ef3d87ea39b1f4b0f1d13fe042af24eba7a062))
+- **storage:** simplify the location cred provider option input ([#13601](https://github.com/aws-amplify/amplify-js/issues/13601)) ([06c093b](https://github.com/aws-amplify/amplify-js/commit/06c093b3efc6d847fb13c8bde5943aeeea8029da))
+- **storage:** support force refresh location credentials ([#13589](https://github.com/aws-amplify/amplify-js/issues/13589)) ([ed29226](https://github.com/aws-amplify/amplify-js/commit/ed29226194d72e8fcf6f756f3f0e6caf9e82dbeb))
+- **storage:** use WeakMap for store registry ([#13586](https://github.com/aws-amplify/amplify-js/issues/13586)) ([16e3c52](https://github.com/aws-amplify/amplify-js/commit/16e3c52a360a7577f114ee3f1a51ac25bbfad5cb))
+- validate corroborating elements in response, and compare echoed elements between request/response ([#13764](https://github.com/aws-amplify/amplify-js/issues/13764)) ([58fb47b](https://github.com/aws-amplify/amplify-js/commit/58fb47be3135d6d32c35c1a90e004bba7eba6147))
+- validate uploaded parts before completing upload ([#13763](https://github.com/aws-amplify/amplify-js/issues/13763)) ([4ff7b52](https://github.com/aws-amplify/amplify-js/commit/4ff7b527cf14a5f0a93cde8f37ba98f5de25aeba))
+
+### Reverts
+
+- Revert "refactor(storage): decouple utils from Amplify singleton (#13562)" (#13597) ([dcba3d7](https://github.com/aws-amplify/amplify-js/commit/dcba3d7768f4daffff66a0fe02f1143edd4107eb)), closes [#13562](https://github.com/aws-amplify/amplify-js/issues/13562) [#13597](https://github.com/aws-amplify/amplify-js/issues/13597)
+- optional checksum algorithm for upload ([#13849](https://github.com/aws-amplify/amplify-js/issues/13849)) ([#13910](https://github.com/aws-amplify/amplify-js/issues/13910)) ([dbe5c7b](https://github.com/aws-amplify/amplify-js/commit/dbe5c7b0f3f40ef5a2f4e37a69e43d430b25e2c1))
+
 ## [6.6.16](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/storage@6.6.15...@aws-amplify/storage@6.6.16) (2024-11-13)
 
 **Note:** Version bump only for package @aws-amplify/storage
