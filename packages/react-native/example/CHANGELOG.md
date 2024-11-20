@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.29](https://github.com/AllanFly120/amplify-js/compare/@aws-amplify/react-native-example@0.0.28...@aws-amplify/react-native-example@0.0.29) (2024-11-19)
+
+**Note:** Version bump only for package @aws-amplify/react-native-example
+
 ## 0.0.28 (2024-04-02)
 
 **Note:** Version bump only for package @aws-amplify/react-native-example

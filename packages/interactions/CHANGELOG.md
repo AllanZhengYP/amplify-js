@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [6.1.0](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/interactions@6.0.57...@aws-amplify/interactions@6.1.0) (2024-11-19)
+
+### Features
+
+- introduce CRC32 checksums to storage:uploadData API ([#13649](https://github.com/aws-amplify/amplify-js/issues/13649)) ([a06c2f9](https://github.com/aws-amplify/amplify-js/commit/a06c2f99c5564546dd412691ca4f3c6500d2b306))
+- **storage:** implement listLocations API and creation handler ([#13602](https://github.com/aws-amplify/amplify-js/issues/13602)) ([a8f8e6e](https://github.com/aws-amplify/amplify-js/commit/a8f8e6e747e40e3efc9ea4e08c549a79132b8c95))
+
 ## [6.0.57](https://github.com/aws-amplify/amplify-js/compare/@aws-amplify/interactions@6.0.56...@aws-amplify/interactions@6.0.57) (2024-11-13)
 
 **Note:** Version bump only for package @aws-amplify/interactions
