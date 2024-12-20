@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [6.11.0](https://github.com/aws-amplify/amplify-js/compare/aws-amplify@6.10.3...aws-amplify@6.11.0) (2024-12-19)
+
+### Bug Fixes
+
+- **adapter-nextjs:** create jwt verifier once ([#13825](https://github.com/aws-amplify/amplify-js/issues/13825)) ([88f9eef](https://github.com/aws-amplify/amplify-js/commit/88f9eef11f143663da4a5abbff1098b3a1dd704a))
+
+### Features
+
+- **auth:** Enable resumable SignIn ([#13855](https://github.com/aws-amplify/amplify-js/issues/13855)) ([#14074](https://github.com/aws-amplify/amplify-js/issues/14074)) ([fe315be](https://github.com/aws-amplify/amplify-js/commit/fe315be4da6d814f2b802cf1acbb00513ca238ac))
+
+## [6.10.3](https://github.com/aws-amplify/amplify-js/compare/aws-amplify@6.10.2...aws-amplify@6.10.3) (2024-12-12)
+
+**Note:** Version bump only for package aws-amplify
+
 ## [6.10.2](https://github.com/aws-amplify/amplify-js/compare/aws-amplify@6.10.0...aws-amplify@6.10.2) (2024-12-03)
 
 **Note:** Version bump only for package aws-amplify
