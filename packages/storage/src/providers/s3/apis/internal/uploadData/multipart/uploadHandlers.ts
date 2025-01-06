@@ -1,6 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { Context, context, Span, trace } from '@opentelemetry/api';
 import {
 	Amplify,
 	KeyValueStorageInterface,
@@ -84,8 +85,7 @@ export const getMultipartUploadHandlers = (
 	uploadDataInput: MultipartUploadDataInput,
 	size: number,
 ) => {
-	let resolveCallback:
-		| ((value: ItemWithKey | ItemWithPath) => void)
+	let resolveCallback: ((value: ItemWithKey | ItemWithPath) => void)
 		| undefined;
 	let rejectCallback: ((reason?: any) => void) | undefined;
 	let inProgressUpload:
@@ -94,9 +94,8 @@ export const getMultipartUploadHandlers = (
 				completedParts: Part[];
 				finalCrc32?: string;
 		  }
-		| undefined;
-	let resolvedS3Config: ResolvedS3Config | undefined;
-	let abortController: AbortController | undefined;
+	let resolvedS3Config: ResolvedS3Config;
+	let abortController: AbortController;
 	let resolvedAccessLevel: StorageAccessLevel | undefined;
 	let resolvedBucket: string | undefined;
 	let resolvedKeyPrefix: string | undefined;
@@ -108,10 +107,16 @@ export const getMultipartUploadHandlers = (
 	// The former one should NOT cause the upload job to throw, but cancels any pending HTTP requests.
 	// This should be replaced by a special abort reason. However,the support of this API is lagged behind.
 	let isAbortSignalFromPause = false;
+	let uploadTracingContext: Context;
+	let uploadTracingSpan: Span;
 
 	const { resumableUploadsCache } = uploadDataInput.options ?? {};
 
+	const { tracer } = (uploadDataInput as UploadDataWithPathInputWithAdvancedOptions).options ?? {};
+
 	const startUpload = async (): Promise<ItemWithKey | ItemWithPath> => {
+		uploadTracingSpan = tracer!.startSpan(`startUpload-${Date.now()}`, {links: []});
+		uploadTracingContext = trace.setSpan(context.active(), uploadTracingSpan); // TODO: support supplying context from caller
 		const { options: uploadDataOptions, data } = uploadDataInput;
 		const resolvedS3Options = await resolveS3ConfigAndInput(
 			Amplify,
@@ -152,7 +157,7 @@ export const getMultipartUploadHandlers = (
 		}
 
 		const optionsHash = (
-			await calculateContentCRC32(JSON.stringify(uploadDataOptions))
+			await calculateContentCRC32(JSON.stringify({...uploadDataOptions, tracer: null}))
 		).checksum;
 
 		if (!inProgressUpload) {
@@ -174,6 +179,8 @@ export const getMultipartUploadHandlers = (
 					optionsHash,
 					resumableUploadsCache,
 					expectedBucketOwner,
+					tracer,
+					tracingContext: uploadTracingContext
 				});
 			inProgressUpload = {
 				uploadId,
@@ -181,6 +188,9 @@ export const getMultipartUploadHandlers = (
 				finalCrc32,
 			};
 		}
+
+		uploadTracingSpan.setAttribute('uploadId', inProgressUpload.uploadId);
+		uploadTracingSpan.setAttribute('size', size);
 
 		uploadCacheKey = size
 			? getUploadsCacheKey({
@@ -232,6 +242,8 @@ export const getMultipartUploadHandlers = (
 					isObjectLockEnabled: resolvedS3Options.isObjectLockEnabled,
 					useCRC32Checksum: Boolean(inProgressUpload.finalCrc32),
 					expectedBucketOwner,
+					tracer: tracer!,
+					tracingContext: uploadTracingContext,
 				}),
 			);
 		}
@@ -240,6 +252,7 @@ export const getMultipartUploadHandlers = (
 
 		validateCompletedParts(inProgressUpload.completedParts, size);
 
+		const completeMPUSpan = tracer?.startSpan('completeMultipartUpload', {}, uploadTracingContext);
 		const { ETag: eTag } = await completeMultipartUpload(
 			{
 				...resolvedS3Config,
@@ -258,8 +271,10 @@ export const getMultipartUploadHandlers = (
 				ExpectedBucketOwner: expectedBucketOwner,
 			},
 		);
+		completeMPUSpan?.end();
 
 		if (size) {
+			const headObjectSpan = tracer?.startSpan('headObject', {}, uploadTracingContext);
 			const { ContentLength: uploadedObjectSize } = await headObject(
 				resolvedS3Config,
 				{
@@ -268,6 +283,7 @@ export const getMultipartUploadHandlers = (
 					ExpectedBucketOwner: expectedBucketOwner,
 				},
 			);
+			headObjectSpan?.end();
 			if (uploadedObjectSize && uploadedObjectSize !== size) {
 				throw new StorageError({
 					name: 'Error',
@@ -286,6 +302,8 @@ export const getMultipartUploadHandlers = (
 			metadata,
 		};
 
+		uploadTracingSpan.end();
+
 		return inputType === STORAGE_INPUT_KEY
 			? { key: objectKey, ...result }
 			: { path: objectKey, ...result };
@@ -293,12 +311,18 @@ export const getMultipartUploadHandlers = (
 
 	const startUploadWithResumability = () =>
 		startUpload()
-			.then(resolveCallback)
+			.then((result) => {
+				uploadTracingSpan.end();
+				resolveCallback?.(result);
+			})
 			.catch(error => {
 				const abortSignal = abortController?.signal;
 				if (abortSignal?.aborted && isAbortSignalFromPause) {
+					uploadTracingSpan.addEvent('Paused');
 					logger.debug('upload paused.');
 				} else {
+					uploadTracingSpan.recordException(error as any);
+					uploadTracingSpan.end();
 					// Uncaught errors should be exposed to the users.
 					rejectCallback!(error);
 				}
@@ -311,13 +335,16 @@ export const getMultipartUploadHandlers = (
 			startUploadWithResumability();
 		});
 	const onPause = () => {
+		uploadTracingSpan.addEvent('onPause');
 		isAbortSignalFromPause = true;
 		abortController?.abort();
 	};
 	const onResume = () => {
+		uploadTracingSpan.addEvent('onResume');
 		startUploadWithResumability();
 	};
 	const onCancel = (message?: string) => {
+		uploadTracingSpan.addEvent('onCancel');
 		// 1. abort in-flight API requests
 		abortController?.abort(message);
 

@@ -143,5 +143,8 @@
 	"overrides": {
 		"tar": "6.2.1",
 		"cross-spawn": "7.0.5"
+	},
+	"dependencies": {
+		"@opentelemetry/api": "^1.9.0"
 	}
 }

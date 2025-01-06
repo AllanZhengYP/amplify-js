@@ -23,6 +23,7 @@ import {
 	findCachedUploadParts,
 	getUploadsCacheKey,
 } from './uploadCache';
+import { Context, Tracer } from '@opentelemetry/api';
 
 interface LoadOrCreateMultipartUploadOptions {
 	s3Config: ResolvedS3Config;
@@ -41,6 +42,8 @@ interface LoadOrCreateMultipartUploadOptions {
 	optionsHash: string;
 	resumableUploadsCache?: KeyValueStorageInterface;
 	expectedBucketOwner?: string;
+	tracer?: Tracer;
+	tracingContext?: Context;
 }
 
 interface LoadOrCreateMultipartUploadResult {
@@ -72,6 +75,8 @@ export const loadOrCreateMultipartUpload = async ({
 	optionsHash,
 	resumableUploadsCache,
 	expectedBucketOwner,
+	tracer,
+	tracingContext,
 }: LoadOrCreateMultipartUploadOptions): Promise<LoadOrCreateMultipartUploadResult> => {
 	const finalKey = keyPrefix !== undefined ? keyPrefix + key : key;
 
@@ -124,6 +129,12 @@ export const loadOrCreateMultipartUpload = async ({
 				? await getCombinedCrc32(data, size)
 				: undefined;
 
+		const tracingSpan = tracer!.startSpan(
+			'createMultipartUpload',
+			{},
+			tracingContext,
+		);
+
 		const { UploadId } = await createMultipartUpload(
 			{
 				...s3Config,
@@ -159,6 +170,7 @@ export const loadOrCreateMultipartUpload = async ({
 				fileName: data instanceof File ? data.name : '',
 			});
 		}
+		tracingSpan.end();
 
 		return {
 			uploadId: UploadId!,

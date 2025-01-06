@@ -53,8 +53,14 @@ export interface AmplifyOutputsStorageBucketProperties {
 	/** Region for the bucket */
 	aws_region: string;
 	/** Paths to object with access permissions */
-	paths?: Record<string, Record<string, string[] | undefined>>;
+	paths?: {[k: string]: Record<string, string[]> };
 }
+
+// type A = {[k: string]: string}
+type A = Record<string, string>;
+declare const b: {a: 'a'} | {b: 'b'}
+const a: A = b;
+
 export interface AmplifyOutputsStorageProperties {
 	/** Default region for Storage */
 	aws_region: string;

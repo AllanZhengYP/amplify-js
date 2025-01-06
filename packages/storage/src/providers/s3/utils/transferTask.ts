@@ -1,5 +1,6 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { context, trace, Tracer } from '@opentelemetry/api';
 
 import { isCancelError } from '../../../errors/CanceledError';
 import {
@@ -70,6 +71,7 @@ interface CreateUploadTaskOptions<Result> {
 	onResume?(): void;
 	onPause?(): void;
 	isMultipartUpload?: boolean;
+	tracer: Tracer;
 }
 
 export const createUploadTask = <Result>({
@@ -78,6 +80,7 @@ export const createUploadTask = <Result>({
 	onResume,
 	onPause,
 	isMultipartUpload,
+	tracer
 }: CreateUploadTaskOptions<Result>): UploadTask<Result> => {
 	const cancellableTask = createCancellableTask<Result>({
 		job,

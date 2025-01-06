@@ -9,6 +9,7 @@ import { CRC32Checksum, calculateContentCRC32 } from '../../../../utils/crc32';
 import { calculateContentMd5 } from '../../../../utils';
 
 import { PartToUpload } from './getDataChunker';
+import { Context, Tracer } from '@opentelemetry/api';
 
 interface UploadPartExecutorOptions {
 	dataChunkerGenerator: Generator<PartToUpload, void, undefined>;
@@ -27,6 +28,8 @@ interface UploadPartExecutorOptions {
 	): void;
 	onProgress?(event: TransferProgressEvent): void;
 	expectedBucketOwner?: string;
+	tracer?: Tracer;
+	tracingContext?: Context;
 }
 
 export const uploadPartExecutor = async ({
@@ -42,12 +45,25 @@ export const uploadPartExecutor = async ({
 	isObjectLockEnabled,
 	useCRC32Checksum,
 	expectedBucketOwner,
+	tracer,
+	tracingContext,
 }: UploadPartExecutorOptions) => {
 	let transferredBytes = 0;
 	for (const { data, partNumber, size } of dataChunkerGenerator) {
+		const span = tracer!.startSpan(
+			`uploadPartExecutor-${partNumber}`,
+			{
+				attributes: {
+					partNumber: partNumber,
+					size: size,
+				},
+			},
+			tracingContext,
+		);
 		if (abortSignal.aborted) {
 			logger.debug('upload executor aborted.');
-			break;
+			span.end();
+			return;
 		}
 
 		if (completedPartNumberSet.has(partNumber)) {
@@ -56,6 +72,7 @@ export const uploadPartExecutor = async ({
 			onProgress?.({
 				transferredBytes,
 			});
+			span.addEvent(`part ${partNumber} has been uploaded.`);
 		} else {
 			// handle cancel error
 			let checksumCRC32: CRC32Checksum | undefined;
@@ -68,6 +85,7 @@ export const uploadPartExecutor = async ({
 					? await calculateContentMd5(data)
 					: undefined;
 
+			span.addEvent(`start uploading part ${partNumber}`);
 			const { ETag: eTag } = await uploadPart(
 				{
 					...s3Config,
@@ -93,6 +111,7 @@ export const uploadPartExecutor = async ({
 			transferredBytes += size;
 			// eTag will always be set even the S3 model interface marks it as optional.
 			onPartUploadCompletion(partNumber, eTag!, checksumCRC32?.checksum);
+			span.end();
 		}
 	}
 };

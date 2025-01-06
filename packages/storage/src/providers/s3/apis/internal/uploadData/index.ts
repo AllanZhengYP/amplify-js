@@ -12,11 +12,13 @@ import {
 	MultipartUploadDataInput,
 	getMultipartUploadHandlers,
 } from './multipart';
+import { context, trace, Tracer } from '@opentelemetry/api';
+import { UploadDataInput } from '../../../../../internals';
 
 export const uploadData = (
 	input: SinglePartUploadDataInput | MultipartUploadDataInput,
 ) => {
-	const { data } = input;
+	const { data, options } = input;
 
 	const dataByteLength = byteLength(data);
 	// Using InvalidUploadSource error code because the input data must NOT be any
@@ -40,6 +42,8 @@ export const uploadData = (
 			onCancel: (message?: string) => {
 				abortController.abort(message);
 			},
+			// @ts-ignore
+			tracer: input.options?.tracer,
 		});
 	} else {
 		// Multipart upload
@@ -54,6 +58,8 @@ export const uploadData = (
 			},
 			onPause,
 			onResume,
+			// @ts-ignore
+			tracer: input.options?.tracer,
 		});
 	}
 };

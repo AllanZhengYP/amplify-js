@@ -1,6 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { Tracer } from '@opentelemetry/api';
+
 import {
 	StorageCopyInputWithPath,
 	StorageOperationInputWithPath,
@@ -48,6 +50,7 @@ export interface GetDataAccessInput {
 export interface AdvancedOptions {
 	locationCredentialsProvider?: CredentialsProvider;
 	customEndpoint?: string;
+	tracer?: Tracer;
 }
 
 /**

@@ -22,6 +22,7 @@ import {
 } from '../../../utils/constants';
 import { calculateContentCRC32 } from '../../../utils/crc32';
 import { constructContentDisposition } from '../../../utils/constructContentDisposition';
+import { context } from '@opentelemetry/api';
 
 /**
  * The input interface for UploadData API with only the options needed for single part upload.
@@ -47,6 +48,8 @@ export const putObjectJob =
 	) =>
 	async (): Promise<ItemWithKey | ItemWithPath> => {
 		const { options: uploadDataOptions, data } = uploadDataInput;
+		const { tracer } = (uploadDataOptions as UploadDataWithPathInputWithAdvancedOptions['options'] ?? {});
+		const putObjectJobSpan = tracer!.startSpan('putObjectJob', {}, context.active());
 		const { bucket, keyPrefix, s3Config, isObjectLockEnabled, identityId } =
 			await resolveS3ConfigAndInput(Amplify, uploadDataInput);
 		const { inputType, objectKey } = validateStorageOperationInput(
@@ -67,7 +70,6 @@ export const putObjectJob =
 			onProgress,
 			expectedBucketOwner,
 		} = uploadDataOptions ?? {};
-
 		const checksumCRC32 =
 			checksumAlgorithm === CHECKSUM_ALGORITHM_CRC32
 				? await calculateContentCRC32(data)
@@ -108,6 +110,8 @@ export const putObjectJob =
 			metadata,
 			size: totalLength,
 		};
+
+		putObjectJobSpan.end();
 
 		return inputType === STORAGE_INPUT_KEY
 			? { key: objectKey, ...result }
